@@ -204,7 +204,8 @@ local Tabs = {
 
 local CharacterSettingsGroupBox = Tabs.Main:AddLeftGroupbox('character settings')
 local MovementGroupBox = Tabs.Main:AddRightGroupbox('movement')
-local CheatsGroupBox = Tabs.Main:AddLeftGroupbox('cheats')
+local AimlockGroupBox = Tabs.Main:AddRightGroupbox('cam lock')
+local SilentAimGroupBox = Tabs.Main:AddLeftGroupbox('silent aim')
 local GunSettingsGroupBox = Tabs.Main:AddRightGroupbox('gun settings')
 local RageBotGroupBox = Tabs.Main:AddLeftGroupbox('rage bot')
 local ViewGroupBox = Tabs.Main:AddRightGroupbox('view')
@@ -214,7 +215,7 @@ local UISettingsGroupBox = Tabs.Settings:AddLeftGroupbox('ui settings')
 
 local VisualsGroupBox = Tabs.Visuals:AddLeftGroupbox('visuals')
 local DahoodUIGroupBox = Tabs.Visuals:AddLeftGroupbox('dahood ui')
-local GunEffectsGroupBox = Tabs.Visuals:AddRightGroupbox('gun effects')
+local GunEffectsTabBox = Tabs.Visuals:AddRightTabbox()
 local ChatSpyGroupBox = Tabs.Visuals:AddLeftGroupbox('chat spy')
 
 local PlacesGroupBox = Tabs.Teleport:AddLeftGroupbox('places')
@@ -678,6 +679,16 @@ CFrameGroupBox:AddSlider('VoidMoveDistance',{
 	Compact = false;
 })
 
+CharacterSettingsGroupBox:AddToggle('Fling',{
+	Text = 'fling';
+	Default = false;
+}):AddKeyPicker('FlingKey',{
+	Default = 'X';
+	Mode = 'Toggle';
+	Text = 'fling';
+	NoUI = false;
+})
+
 CharacterSettingsGroupBox:AddToggle('AntiStomp',{
 	Text = 'anti stomp';
 	Default = false;
@@ -703,16 +714,6 @@ CharacterSettingsGroupBox:AddToggle('100PercentBlock',{
 	Default = false;
 })
 
-CharacterSettingsGroupBox:AddToggle('Fling',{
-	Text = 'fling';
-	Default = false;
-}):AddKeyPicker('FlingKey',{
-	Default = 'X';
-	Mode = 'Toggle';
-	Text = 'fling';
-	NoUI = false;
-})
-
 CharacterSettingsGroupBox:AddDivider()
 
 CharacterSettingsGroupBox:AddToggle('AutoStomp',{
@@ -722,6 +723,11 @@ CharacterSettingsGroupBox:AddToggle('AutoStomp',{
 
 CharacterSettingsGroupBox:AddToggle('AutoStompAnimation',{
 	Text = 'play stomp animation';
+	Default = false;
+})
+
+CharacterSettingsGroupBox:AddToggle('AutoHealth',{
+	Text = 'auto health';
 	Default = false;
 })
 
@@ -735,11 +741,6 @@ CharacterSettingsGroupBox:AddDropdown('ArmorType',{
 	Default = 2;
 	Mutli = false;
 	Text = 'armor type';
-})
-
-CharacterSettingsGroupBox:AddToggle('AutoHealth',{
-	Text = 'auto health';
-	Default = false;
 })
 
 MovementGroupBox:AddToggle('Fly',{
@@ -1000,43 +1001,15 @@ RunService.RenderStepped:Connect(function(dt)
 	end
 end)
 
-GunEffectsGroupBox:AddToggle('BulletColor',{
+local GunEffectsTab1 = GunEffectsTabBox:AddTab('bullet')
+GunEffectsTab1:AddToggle('BulletColor',{
 	Text = 'bullet color';
 	Default = false;
 }):AddColorPicker('BulletColorPicker',{
 	Default = Color3.new(1,1,0);
 	Title = 'bullet color';
 })
-
-GunEffectsGroupBox:AddToggle('GunHitSound',{
-	Text = 'gun hit sound';
-	Default = false;
-	Tooltip = 'changes the default hit sound (client sided)';
-})
-
-GunEffectsGroupBox:AddDropdown('HitSoundEffects',{
-	Values = {'minecraft','black opps','nigga'};
-	Default = 1;
-	Multi = false;
-	Text = 'hit sound';
-	Tooltip = 'damage sound';
-})
-
-GunEffectsGroupBox:AddToggle('StompSound',{
-	Text = 'stomp sound';
-	Default = false;
-	Tooltip = 'changes the default stomp sound (client sided)';
-})
-
-GunEffectsGroupBox:AddDropdown('StompSoundEffects',{
-	Values = {'fortnite','black opps','nigga'};
-	Default = 1;
-	Multi = false;
-	Text = 'stomp sound';
-	Tooltip = 'stomp sound';
-})
-
-GunEffectsGroupBox:AddSlider('BulletWidth0',{
+GunEffectsTab1:AddSlider('BulletWidth0',{
 	Text = 'bullet width0';
 	Default = 0;
 	Min = 0;
@@ -1044,8 +1017,7 @@ GunEffectsGroupBox:AddSlider('BulletWidth0',{
 	Rounding = 1;
 	Compact = false;
 })
-
-GunEffectsGroupBox:AddSlider('BulletWidth1',{
+GunEffectsTab1:AddSlider('BulletWidth1',{
 	Text = 'bullet width1';
 	Default = 0.1;
 	Min = 0;
@@ -1053,8 +1025,7 @@ GunEffectsGroupBox:AddSlider('BulletWidth1',{
 	Rounding = 1;
 	Compact = false;
 })
-
-GunEffectsGroupBox:AddSlider('BulletTransparency',{
+GunEffectsTab1:AddSlider('BulletTransparency',{
 	Text = 'bullet transparency';
 	Default = 0.5;
 	Min = 0;
@@ -1062,20 +1033,16 @@ GunEffectsGroupBox:AddSlider('BulletTransparency',{
 	Rounding = 1;
 	Compact = false;
 })
-
-GunEffectsGroupBox:AddDivider()
-
-GunEffectsGroupBox:AddToggle('BulletSparkEffects',{
+GunEffectsTab1:AddToggle('BulletSparkEffects',{
 	Text = 'bullet spark effects';
 	Default = false;
 	Tooltip = 'bullet spark effects'
 })
-GunEffectsGroupBox:AddLabel('bullet spark color'):AddColorPicker('BulletSparkColor',{
+GunEffectsTab1:AddLabel('bullet spark color'):AddColorPicker('BulletSparkColor',{
 	Default = Color3.new(1,1,0);
 	Title = 'bullet spark color';
 })
-
-GunEffectsGroupBox:AddSlider('BulletSparkBrightness',{
+GunEffectsTab1:AddSlider('BulletSparkBrightness',{
 	Text = 'bullet spark brightness';
 	Default = 10;
 	Min = 0;
@@ -1083,30 +1050,36 @@ GunEffectsGroupBox:AddSlider('BulletSparkBrightness',{
 	Rounding = 1;
 	Compact = false;
 })
-
-GunEffectsGroupBox:AddSlider('BulletSparkRange',{
-	Text = 'bullet spark range';
-	Default = 14;
-	Min = 0;
-	Max = 20;
-	Rounding = 1;
-	Compact = false;
+local GunEffectsTab2 = GunEffectsTabBox:AddTab('sounds')
+GunEffectsTab2:AddToggle('GunHitSound',{
+	Text = 'gun hit sound';
+	Default = false;
 })
-
-GunEffectsGroupBox:AddDivider()
-
-GunEffectsGroupBox:AddToggle('BulletSound',{
+GunEffectsTab2:AddToggle('StompSound',{
+	Text = 'stomp sound';
+	Default = false;
+})
+GunEffectsTab2:AddToggle('BulletSound',{
 	Text = 'bullet sound',
 	Default = false;
-	Tooltip = 'sound gun makes when shoot';
 })
-
-GunEffectsGroupBox:AddDropdown('BulletSoundEffects',{
+GunEffectsTab2:AddDropdown('HitSoundEffects',{
+	Values = {'minecraft','black opps','nigga'};
+	Default = 1;
+	Multi = false;
+	Text = 'hit sound';
+})
+GunEffectsTab2:AddDropdown('StompSoundEffects',{
+	Values = {'fortnite','black opps','nigga'};
+	Default = 1;
+	Multi = false;
+	Text = 'stomp sound';
+})
+GunEffectsTab2:AddDropdown('BulletSoundEffects',{
 	Values = {'laser','cs go','nigga'};
 	Default = 1;
 	Multi = false;
 	Text = 'bullet sound';
-	Tooltip = 'gun shoot sound';
 })
 
 function ChatSpy.checkIgnored(message)
@@ -1210,7 +1183,6 @@ workspace.DescendantAdded:Connect(function(child)
 		if child:IsA("PointLight") and child.Parent.Name == "BULLET_RAYS" then
 			child.Brightness = Options.BulletSparkBrightness.Value
 			child.Color = Options.BulletSparkColor.Value
-			child.Range = Options.BulletSparkRange.Value
 			child.Enabled = true
 		end
 	end
@@ -1268,7 +1240,7 @@ Options.ViewPlayerTarget:OnChanged(function(Value)
 	end
 end)
 
-CheatsGroupBox:AddToggle('Aimlock',{
+AimlockGroupBox:AddToggle('Aimlock',{
 	Text = 'aimlock';
 	Default = false;
 }):AddKeyPicker('AimlockKey',{
@@ -1278,27 +1250,27 @@ CheatsGroupBox:AddToggle('Aimlock',{
 	NoUI = false;
 })
 
-CheatsGroupBox:AddToggle('AimlockFriendCheck',{
+AimlockGroupBox:AddToggle('AimlockFriendCheck',{
 	Text = 'friend check';
 	Default = true;
 })
 
-CheatsGroupBox:AddToggle('AimlockCrewCheck',{
+AimlockGroupBox:AddToggle('AimlockCrewCheck',{
 	Text = 'crew check';
 	Default = true;
 })
 
-CheatsGroupBox:AddToggle('AimlockWallCheck',{
+AimlockGroupBox:AddToggle('AimlockWallCheck',{
 	Text = 'wall check';
 	Default = true;
 })
 
-CheatsGroupBox:AddToggle('AimlockDownedCheck',{
+AimlockGroupBox:AddToggle('AimlockDownedCheck',{
 	Text = 'down check';
 	Default = true;
 })
 
-CheatsGroupBox:AddDropdown('AimlockToggleType',{
+AimlockGroupBox:AddDropdown('AimlockToggleType',{
 	Values = {'Toggle','Hold'};
 	Default = 2;
 	Multi = false;
@@ -1308,44 +1280,16 @@ CheatsGroupBox:AddDropdown('AimlockToggleType',{
 	end,
 })
 
-CheatsGroupBox:AddDropdown('AimlockAimPart',{
+AimlockGroupBox:AddDropdown('AimlockAimPart',{
 	Values = {'Head','HumanoidRootPart','LowerTorso','UpperTorso'};
 	Default = 1;
 	Multi = false;
 	Text = 'aimpart';
 })
 
-CheatsGroupBox:AddDivider()
+AimlockGroupBox:AddDivider()
 
-CheatsGroupBox:AddToggle('SilentAim',{
-	Text = 'silent aim';
-	Default = false;
-}):AddKeyPicker('SilentAimKey',{
-	Default = 'MB1';
-	Mode = 'Always';
-	Text = 'silent aim';
-	NoUI = false;
-})
-
-CheatsGroupBox:AddDropdown('SilentAimShootPart',{
-	Values = {'Closest','Head','HumanoidRootPart','LowerTorso','UpperTorso'};
-	Default = 1;
-	Multi = false;
-	Text = 'shoot part';
-})
-
-CheatsGroupBox:AddSlider('SilentAimBulletOffset',{
-	Text = 'bullet offset';
-	Default = 0.5;
-	Min = 0;
-	Max = 2;
-	Rounding = 1;
-	Compact = false;
-})
-
-CheatsGroupBox:AddDivider()
-
-CheatsGroupBox:AddToggle('TriggerBot',{
+AimlockGroupBox:AddToggle('TriggerBot',{
 	Text = 'trigger bot';
 	Default = false;
 }):AddKeyPicker('TriggerBotKey',{
@@ -1355,14 +1299,40 @@ CheatsGroupBox:AddToggle('TriggerBot',{
 	NoUI = false;
 })
 
-CheatsGroupBox:AddToggle('TriggerBotFriendCheck',{
+AimlockGroupBox:AddToggle('TriggerBotFriendCheck',{
 	Text = 'friend check';
 	Default = false;
 })
 
-CheatsGroupBox:AddToggle('TriggerBotSyncWithAimlock',{
+AimlockGroupBox:AddToggle('TriggerBotSyncWithAimlock',{
 	Text = 'sync with aimlock';
 	Default = false;
+})
+
+SilentAimGroupBox:AddToggle('SilentAim',{
+	Text = 'silent aim';
+	Default = false;
+}):AddKeyPicker('SilentAimKey',{
+	Default = 'MB1';
+	Mode = 'Always';
+	Text = 'silent aim';
+	NoUI = false;
+})
+
+SilentAimGroupBox:AddDropdown('SilentAimShootPart',{
+	Values = {'Closest','Head','HumanoidRootPart','LowerTorso','UpperTorso'};
+	Default = 1;
+	Multi = false;
+	Text = 'shoot part';
+})
+
+SilentAimGroupBox:AddSlider('SilentAimBulletOffset',{
+	Text = 'bullet offset';
+	Default = 0.5;
+	Min = 0;
+	Max = 2;
+	Rounding = 1;
+	Compact = false;
 })
 
 PlacesGroupBox:AddButton({
