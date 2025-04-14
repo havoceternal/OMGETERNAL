@@ -152,7 +152,7 @@ local DataFolder = Player:WaitForChild("DataFolder")
 local InventoryFolder = DataFolder:WaitForChild("Inventory")
 
 local originalCharacterPos = nil
-local gettingHealth = true
+local gettingHealth = false
 
 local MainEvent = ReplicatedStorage:FindFirstChild("MainEvent")
 
@@ -204,11 +204,10 @@ local Tabs = {
 
 local CharacterSettingsGroupBox = Tabs.Main:AddLeftGroupbox('character settings')
 local MovementGroupBox = Tabs.Main:AddRightGroupbox('movement')
-local GunSettingsGroupBox = Tabs.Main:AddLeftGroupbox('gun settings')
-local RageBotGroupBox = Tabs.Main:AddRightGroupbox('rage bot (u mad nigga?)')
-local ViewGroupBox = Tabs.Main:AddLeftGroupbox('view')
-local AimlockGroupBox = Tabs.Main:AddLeftGroupbox('aim lock')
-local SilentAimlockGroupBox = Tabs.Main:AddRightGroupbox('silent aim')
+local CheatsGroupBox = Tabs.Main:AddLeftGroupbox('cheats')
+local GunSettingsGroupBox = Tabs.Main:AddRightGroupbox('gun settings')
+local RageBotGroupBox = Tabs.Main:AddLeftGroupbox('rage bot')
+local ViewGroupBox = Tabs.Main:AddRightGroupbox('view')
 local CFrameGroupBox = Tabs.Main:AddRightGroupbox('cframing')
 
 local UISettingsGroupBox = Tabs.Settings:AddLeftGroupbox('ui settings')
@@ -338,21 +337,37 @@ local function GetEquippedGun()
 	return nil
 end
 
-local function GetGun()
+local function GetGun(customGun)
 	local Tool
-	for _, v in pairs(Player.Character:GetChildren()) do 
-		if (v:FindFirstChild('Ammo') and v:FindFirstChild('MaxAmmo')) then 
-			Tool = v 
-			return Tool
+	if customGun then
+		for _, v in pairs(Player.Character:GetChildren()) do 
+			if v.Name == customGun then 
+				Tool = v 
+				return Tool
+			end
 		end
-	end
-	for _, v in pairs(Player.Backpack:GetChildren()) do 
-		if (v:FindFirstChild('Ammo') and v:FindFirstChild('MaxAmmo')) then 
-			Tool = v 
-			return Tool
+		for _, v in pairs(Player.Backpack:GetChildren()) do 
+			if v.Name == customGun then 
+				Tool = v 
+				return Tool
+			end
 		end
+		return nil
+	else
+		for _, v in pairs(Player.Character:GetChildren()) do 
+			if (v:FindFirstChild('Ammo') and v:FindFirstChild('MaxAmmo')) then 
+				Tool = v 
+				return Tool
+			end
+		end
+		for _, v in pairs(Player.Backpack:GetChildren()) do 
+			if (v:FindFirstChild('Ammo') and v:FindFirstChild('MaxAmmo')) then 
+				Tool = v 
+				return Tool
+			end
+		end
+		return nil
 	end
-	return nil
 end
 
 local function checkCrew(targetPlayer)
@@ -666,13 +681,11 @@ CFrameGroupBox:AddSlider('VoidMoveDistance',{
 CharacterSettingsGroupBox:AddToggle('AntiStomp',{
 	Text = 'anti stomp';
 	Default = false;
-	Tooltip = 'ovens sucks dick btw';
 })
 
 CharacterSettingsGroupBox:AddToggle('InfStamina',{
 	Text = 'inf stamina';
 	Default = false;
-	Tooltip = 'ghost sucks ass';
 })
 
 CharacterSettingsGroupBox:AddToggle('NoSeats',{
@@ -1255,10 +1268,9 @@ Options.ViewPlayerTarget:OnChanged(function(Value)
 	end
 end)
 
-AimlockGroupBox:AddToggle('Aimlock',{
+CheatsGroupBox:AddToggle('Aimlock',{
 	Text = 'aimlock';
 	Default = false;
-	Tooltip = 'cam lock on ppl';
 }):AddKeyPicker('AimlockKey',{
 	Default = 'C';
 	Mode = 'Hold';
@@ -1266,53 +1278,48 @@ AimlockGroupBox:AddToggle('Aimlock',{
 	NoUI = false;
 })
 
-AimlockGroupBox:AddToggle('AimlockFriendCheck',{
+CheatsGroupBox:AddToggle('AimlockFriendCheck',{
 	Text = 'friend check';
 	Default = true;
-	Tooltip = 'aimlock friend check';
 })
 
-AimlockGroupBox:AddToggle('AimlockCrewCheck',{
+CheatsGroupBox:AddToggle('AimlockCrewCheck',{
 	Text = 'crew check';
 	Default = true;
-	Tooltip = 'aimlock crew check';
 })
 
-AimlockGroupBox:AddToggle('AimlockWallCheck',{
+CheatsGroupBox:AddToggle('AimlockWallCheck',{
 	Text = 'wall check';
 	Default = true;
-	Tooltip = 'aimlock wall check';
 })
 
-AimlockGroupBox:AddToggle('AimlockDownedCheck',{
+CheatsGroupBox:AddToggle('AimlockDownedCheck',{
 	Text = 'down check';
 	Default = true;
-	Tooltip = 'will check if player is KOd before locking';
 })
 
-AimlockGroupBox:AddDropdown('AimlockToggleType',{
+CheatsGroupBox:AddDropdown('AimlockToggleType',{
 	Values = {'Toggle','Hold'};
 	Default = 2;
 	Multi = false;
 	Text = 'toggle type';
-	Tooltip = 'aimlock toggle type';
 	Callback = function(Value)
 		Options.AimlockKey.Mode = tostring(Value)
 	end,
 })
 
-AimlockGroupBox:AddDropdown('AimlockAimPart',{
+CheatsGroupBox:AddDropdown('AimlockAimPart',{
 	Values = {'Head','HumanoidRootPart','LowerTorso','UpperTorso'};
 	Default = 1;
 	Multi = false;
 	Text = 'aimpart';
-	Tooltip = 'aimlock aimpart';
 })
 
-SilentAimlockGroupBox:AddToggle('SilentAim',{
+CheatsGroupBox:AddDivider()
+
+CheatsGroupBox:AddToggle('SilentAim',{
 	Text = 'silent aim';
 	Default = false;
-	Tooltip = 'silent aim on ppl';
 }):AddKeyPicker('SilentAimKey',{
 	Default = 'MB1';
 	Mode = 'Always';
@@ -1320,21 +1327,42 @@ SilentAimlockGroupBox:AddToggle('SilentAim',{
 	NoUI = false;
 })
 
-SilentAimlockGroupBox:AddDropdown('SilentAimShootPart',{
+CheatsGroupBox:AddDropdown('SilentAimShootPart',{
 	Values = {'Closest','Head','HumanoidRootPart','LowerTorso','UpperTorso'};
 	Default = 1;
 	Multi = false;
 	Text = 'shoot part';
-	Tooltip = 'silent aim shoot part';
 })
 
-SilentAimlockGroupBox:AddSlider('SilentAimBulletOffset',{
+CheatsGroupBox:AddSlider('SilentAimBulletOffset',{
 	Text = 'bullet offset';
 	Default = 0.5;
 	Min = 0;
 	Max = 2;
 	Rounding = 1;
 	Compact = false;
+})
+
+CheatsGroupBox:AddDivider()
+
+CheatsGroupBox:AddToggle('TriggerBot',{
+	Text = 'trigger bot';
+	Default = false;
+}):AddKeyPicker('TriggerBotKey',{
+	Default = 'Y';
+	Mode = 'Toggle';
+	Text = 'trigger bot';
+	NoUI = false;
+})
+
+CheatsGroupBox:AddToggle('TriggerBotFriendCheck',{
+	Text = 'friend check';
+	Default = false;
+})
+
+CheatsGroupBox:AddToggle('TriggerBotSyncWithAimlock',{
+	Text = 'sync with aimlock';
+	Default = false;
 })
 
 PlacesGroupBox:AddButton({
@@ -1536,12 +1564,14 @@ end
 
 local function stompPlayer(target)
 	if Character:FindFirstChild("BodyEffects") and Character.BodyEffects:FindFirstChild("K.O") and not Character.BodyEffects['K.O'].Value then
-		local upperTorsoPosition = target.Character.UpperTorso.Position
-		local targetPosition = upperTorsoPosition + Vector3.new(0, 3, 0)
-		HumanoidRootPart.CFrame = CFrame.new(targetPosition, targetPosition + Vector3.new(0, 0, -1))
-		ReplicatedStorage.MainEvent:FireServer("Stomp")
-		if target.Character.BodyEffects['Dead'].Value then
-			return true
+		if target.Character and target.Character:FindFirstChild("UpperTorso") then
+			local upperTorsoPosition = target.Character.UpperTorso.Position
+			local targetPosition = upperTorsoPosition + Vector3.new(0, 3, 0)
+			HumanoidRootPart.CFrame = CFrame.new(targetPosition, targetPosition + Vector3.new(0, 0, -1))
+			ReplicatedStorage.MainEvent:FireServer("Stomp")
+			if target.Character.BodyEffects['Dead'].Value then
+				return true
+			end
 		end
 	end
 end
@@ -1559,7 +1589,7 @@ TargetGroupBox:AddToggle('Target',{
 
 Options.TargetKey:OnClick(function()
 	--if not Options.TargetKey:GetState() then
-		--Camera.CameraSubject = Character
+	--Camera.CameraSubject = Character
 	--end
 end)
 
@@ -1583,7 +1613,7 @@ TargetGroupBox:AddDropdown('Targets',{
 })
 
 TargetGroupBox:AddDropdown('TargetGunMode',{
-	Values = {'aug', 'rifle'};
+	Values = {'[AUG]', '[Rifle]'};
 	Default = 2;
 	Mutli = false;
 	Text = 'gun mode';
@@ -1604,7 +1634,10 @@ local rifleAmmo = workspace:FindFirstChild("5 [Rifle Ammo] - $273", true)
 
 local function handleGun(target)
 	if Character:FindFirstChild("BodyEffects") and Character.BodyEffects:FindFirstChild("K.O") and not Character.BodyEffects['K.O'].Value then
-		local gun = GetGun()
+		local gun = GetGun(Options.TargetGunMode.Value)
+		if gun and gun.Parent ~= Character then
+			Humanoid:EquipTool(gun)
+		end
 		if not isPurchasing and gun and not target.Character.BodyEffects['K.O'].Value then
 			orbitAround(target)
 			ShootGun(target)
@@ -1614,12 +1647,12 @@ end
 
 local function handlePurchases()
 	if Character:FindFirstChild("BodyEffects") and Character.BodyEffects:FindFirstChild("K.O") and not Character.BodyEffects['K.O'].Value then
-		local gun = GetGun()
-		if gun and gun.Parent ~= Character and not gettingHealth then
+		local gun = GetGun(Options.TargetGunMode.Value)
+		if gun and gun.Parent ~= Character then
 			Humanoid:EquipTool(gun)
 		end
 		if not gun then
-			if Options.TargetGunMode.Value == 'aug' then
+			if Options.TargetGunMode.Value == '[AUG]' then
 				purchaseItem(aug)
 			else
 				purchaseItem(rifle)
@@ -1639,73 +1672,76 @@ end
 
 task.spawn(function()
 	while task.wait() do
-		local state = Options.TargetKey:GetState()
-		if state then
-			if not isPurchasing then
-				local gun = GetGun()
-				if #targets == 1 then
-					local target = Players:FindFirstChild(targets[1])
-					if target and target.Character and target.Character:FindFirstChild('BodyEffects') then
-						local bodyEffects = target.Character.BodyEffects
-						if Toggles.ViewKillingTarget.Value then
-							Camera.CameraSubject = target.Character
-						end
-						handleGun(target)
-						handlePurchases()
-						if not isPurchasing and target.Character.BodyEffects['K.O'].Value and not target.Character.BodyEffects['Dead'].Value then
-							stompPlayer(target)
-						elseif not isPurchasing and gun and gun.Ammo.Value == 0 then
-							void()	
-						elseif not isPurchasing and bodyEffects['Dead'].Value then
-							void()
-						end
-					end
-				elseif #targets > 1 then
-					local allDead = true
-					for _, name in ipairs(targets) do
-						local target = Players:FindFirstChild(name)
-						if target and target.Character and target.Character:FindFirstChild("BodyEffects") then
-							local bodyEffects = target.Character.BodyEffects
-							if not target.Character.BodyEffects["Dead"].Value then
-								allDead = false
-								break
-							end
-						else
-							allDead = false
-							break
-						end
-					end
-					if allDead then
-						void()
-						continue
-					end
-					local currentIndex = 1
-					local function processTarget()
-						if currentIndex > #targets then return end
-						local target = Players:FindFirstChild(targets[currentIndex])
-						if target and target.Character and target.Character:FindFirstChild("BodyEffects") then
-							local bodyEffects = target.Character.BodyEffects
+		local success, err = pcall(function()
+			local state = Options.TargetKey:GetState()
+			if state then
+				if not isPurchasing then
+					local gun = GetGun(Options.TargetGunMode.Value)
+					if #targets == 1 then
+						local target = Players:FindFirstChild(targets[1])
+						if target and target.Character and target.Character:FindFirstChild('BodyEffects') then
 							if Toggles.ViewKillingTarget.Value then
 								Camera.CameraSubject = target.Character
 							end
 							handleGun(target)
 							handlePurchases()
-							if not isPurchasing and target.Character.BodyEffects["K.O"].Value and not target.Character.BodyEffects["Dead"].Value then
+							if not isPurchasing and target.Character.BodyEffects['K.O'].Value and not target.Character.BodyEffects['Dead'].Value then
 								stompPlayer(target)
-							elseif not isPurchasing and gun and gun.Ammo.Value == 0 then
+							elseif not isPurchasing and gun and gun:FindFirstChild("Ammo").Value == 0 and not target.Character.BodyEffects['K.O'].Value then
 								void()
-							elseif not isPurchasing and target.Character.BodyEffects["Dead"].Value then
+							elseif not isPurchasing and target.Character.BodyEffects['Dead'].Value then
+								void()
+							end
+						end
+					elseif #targets > 1 then
+						local allDead = true
+						for _, name in ipairs(targets) do
+							local target = Players:FindFirstChild(name)
+							if target and target.Character and target.Character:FindFirstChild("BodyEffects") then
+								if not target.Character.BodyEffects["Dead"].Value then
+									allDead = false
+									break
+								end
+							else
+								allDead = false
+								break
+							end
+						end
+						if allDead then
+							void()
+							return
+						end
+						local currentIndex = 1
+						local function processTarget()
+							if currentIndex > #targets then return end
+							local target = Players:FindFirstChild(targets[currentIndex])
+							if target and target.Character and target.Character:FindFirstChild("BodyEffects") then
+								if Toggles.ViewKillingTarget.Value then
+									Camera.CameraSubject = target.Character
+								end
+								handleGun(target)
+								handlePurchases()
+								if not isPurchasing and target.Character.BodyEffects["K.O"].Value and not target.Character.BodyEffects["Dead"].Value then
+									stompPlayer(target)
+								elseif not isPurchasing and gun and gun:FindFirstChild("Ammo").Value == 0 and not target.Character.BodyEffects['K.O'].Value then
+									void()
+								elseif not isPurchasing and target.Character.BodyEffects["Dead"].Value then
+									currentIndex += 1
+									processTarget()
+								end
+							else
 								currentIndex += 1
 								processTarget()
 							end
-						else
-							currentIndex += 1
-							processTarget()
 						end
+						processTarget()
 					end
-					processTarget()
 				end
 			end
+		end)
+
+		if not success then
+			warn("Error occurred in target loop:", err)
 		end
 	end
 end)
@@ -1946,7 +1982,7 @@ end
 
 local taco = workspace:FindFirstChild("[Taco] - $4", true)
 local autohealthloop = nil
-Toggles.AutoHealth:OnChanged(function()
+--[[Toggles.AutoHealth:OnChanged(function()
 	if Toggles.AutoHealth.Value then
 		if not autohealthloop then
 			autohealthloop = task.spawn(function()
@@ -1989,7 +2025,7 @@ Toggles.AutoHealth:OnChanged(function()
 	else
 		autohealthloop = nil
 	end
-end)
+end)--]]
 
 local lastCheckedTarget = nil
 local isLastTargetFriend = false
@@ -2020,11 +2056,48 @@ task.spawn(function()
 					local aimPart = AimlockAimTarget.Character:FindFirstChild(Options.AimlockAimPart.Value)
 					if aimPart then
 						Camera.CFrame = CFrame.new(Camera.CFrame.Position, aimPart.Position)
+						if Options.TriggerBotKey:GetState() and Toggles.TriggerBotSyncWithAimlock.Value then
+							local gun = GetEquippedGun()
+							if gun then
+								gun:Activate()
+							end
+						end
+					end
+				else
+					if Toggles.TriggerBotSyncWithAimlock.Value then
+						local gun = GetEquippedGun()
+						if gun then
+							gun:Deactivate()
+						end
 					end
 				end
 			end
 		else
 			AimlockAimTarget = nil
+		end
+	end
+end)
+
+task.spawn(function()
+	while task.wait() do
+		local state = Options.TriggerBotKey:GetState()
+		if state then
+			local gun = GetEquippedGun()
+			if gun then
+				Mouse.TargetFilter = Character
+				if Mouse.Target then
+					if Mouse.Target.Parent then
+						if Mouse.Target.Parent:FindFirstChildOfClass("Humanoid") then
+							local friendCheck = checkFriend(Players:FindFirstChild(Mouse.Target.Parent.Name),Toggles.TriggerBotFriendCheck.Value)
+							if not friendCheck then
+								gun:Activate()
+							end
+						else
+							gun:Deactivate()
+						end
+					end
+				end
+			end
 		end
 	end
 end)
