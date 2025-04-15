@@ -416,20 +416,29 @@ local function GetGun(customGun)
 end
 
 local function checkCrew(targetPlayer)
-	local OurInformation = Player:WaitForChild("DataFolder"):FindFirstChild("Information")
-	local TheirInformation = targetPlayer:WaitForChild("DataFolder"):FindFirstChild("Information")
-	if not OurInformation or TheirInformation then 
-		return false
+	local success, result = pcall(function()
+		local OurInformation = DataFolder:FindFirstChild("Information")
+		local TheirInformation = targetPlayer:WaitForChild("DataFolder"):FindFirstChild("Information")
+		if not OurInformation or not TheirInformation then 
+			return false
+		end
+		local ourCrew = OurInformation:FindFirstChild("Crew")
+		local theirCrew = TheirInformation:FindFirstChild("Crew")
+
+		if not ourCrew or not theirCrew then 
+			return false 
+		end
+		if ourCrew.Value == "" or theirCrew.Value == "" then
+			return false 
+		end
+		return ourCrew.Value == theirCrew.Value
+	end)
+	if success then
+		return result
+	else
+		warn("checkCrew error:", result)
+		checkCrew(targetPlayer)
 	end
-	local ourCrew = OurInformation:FindFirstChild("Crew")
-	local theirCrew = TheirInformation:FindFirstChild("Crew")
-	if not ourCrew or not theirCrew then 
-		return false 
-	end
-	if ourCrew.Value == "" or theirCrew.Value == "" then
-		return false 
-	end
-	return ourCrew.Value == theirCrew.Value
 end
 
 local function checkFriend(targetPlayer,friendCheck)
