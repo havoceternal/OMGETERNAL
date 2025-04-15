@@ -460,28 +460,39 @@ local function isPlayerWhitelisted(targetPlayer)
 end
 
 local function GetClosestPlayerToCharacter()
-	local closestPlayer = nil
-	local shortestDistance = math.huge
-	for _, target in ipairs(Players:GetPlayers()) do
-		if target ~= Player and target.Character then
-			local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
-			if targetRoot then
-				local distance = (HumanoidRootPart.Position - targetRoot.Position).Magnitude
-				if distance < shortestDistance 
-					and target.Character:FindFirstChild("BodyEffects") 
-					and target.Character.BodyEffects:FindFirstChild("K.O") 
-					and not target.Character.BodyEffects["K.O"].Value
-					and not checkCrew(target) 
-					and not checkFriend(target,Toggles.KillAuraFriendCheck.Value)
-					and not isPlayerWhitelisted(target) then
-					shortestDistance = distance
-					closestPlayer = target
+	local success, result = pcall(function()
+		local closestPlayer = nil
+		local shortestDistance = math.huge
+		for _, target in ipairs(Players:GetPlayers()) do
+			if target ~= Player and target.Character then
+				local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
+				if targetRoot then
+					local distance = (HumanoidRootPart.Position - targetRoot.Position).Magnitude
+					local bodyEffects = target.Character:FindFirstChild("BodyEffects")
+					local isKO = bodyEffects and bodyEffects:FindFirstChild("K.O")
+
+					if distance < shortestDistance 
+						and isKO and not isKO.Value
+						and not checkCrew(target) 
+						and not checkFriend(target, Toggles.KillAuraFriendCheck.Value)
+						and not isPlayerWhitelisted(target) then
+
+						shortestDistance = distance
+						closestPlayer = target
+					end
 				end
 			end
 		end
+		return closestPlayer
+	end)
+	if success then
+		return result
+	else
+		warn("Error in GetClosestPlayerToCharacter:", result)
+		return nil
 	end
-	return closestPlayer
 end
+
 
 local function GetClosestPlayerToMouse(wallcheck,downCheck)
 	local closestPlayer = nil
@@ -724,18 +735,18 @@ CFrameGroupBox:AddToggle('Void',{
 
 CFrameGroupBox:AddSlider('VoidMinimumY',{
 	Text = 'void minimum y axis';
-	Default = 100000;
+	Default = 100000000;
 	Min = 50000;
-	Max = 10000000;
+	Max = 10000000000;
 	Rounding = 0;
 	Compact = false;
 })
 
 CFrameGroupBox:AddSlider('VoidMoveDistance',{
 	Text = 'void move distance';
-	Default = 500;
+	Default = 50000;
 	Min = 50;
-	Max = 5000;
+	Max = 10000000000;
 	Rounding = 0;
 	Compact = false;
 })
@@ -1380,11 +1391,6 @@ AimlockGroupBox:AddToggle('TriggerBot',{
 
 AimlockGroupBox:AddToggle('TriggerBotFriendCheck',{
 	Text = 'friend check';
-	Default = false;
-})
-
-AimlockGroupBox:AddToggle('TriggerBotSyncWithAimlock',{
-	Text = 'sync with aimlock';
 	Default = false;
 })
 
@@ -2123,19 +2129,6 @@ task.spawn(function()
 					local aimPart = AimlockAimTarget.Character:FindFirstChild(Options.AimlockAimPart.Value)
 					if aimPart then
 						Camera.CFrame = CFrame.new(Camera.CFrame.Position, aimPart.Position)
-						if Options.TriggerBotKey:GetState() and Toggles.TriggerBotSyncWithAimlock.Value then
-							local gun = GetEquippedGun()
-							if gun then
-								gun:Activate()
-							end
-						end
-					end
-				else
-					if Toggles.TriggerBotSyncWithAimlock.Value then
-						local gun = GetEquippedGun()
-						if gun then
-							gun:Deactivate()
-						end
 					end
 				end
 			end
@@ -2159,8 +2152,6 @@ task.spawn(function()
 							if not friendCheck then
 								gun:Activate()
 							end
-						else
-							gun:Deactivate()
 						end
 					end
 				end
