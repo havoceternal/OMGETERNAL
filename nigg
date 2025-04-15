@@ -31,9 +31,26 @@ local DefaultChatSystemChatEvents = ReplicatedStorage:WaitForChild("DefaultChatS
 local SayMessageRequest = DefaultChatSystemChatEvents:WaitForChild("SayMessageRequest")
 local OnMessageDoneFiltering = DefaultChatSystemChatEvents:WaitForChild("OnMessageDoneFiltering")
 local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.ScreenInsets = Enum.ScreenInsets.None
 ScreenGui.Name = "eternalasc"
 ScreenGui.Parent = game.Players.LocalPlayer.PlayerGui
 ScreenGui.ResetOnSpawn = false
+local actionText = Instance.new("TextLabel",ScreenGui)
+local UISTROKE6 = Instance.new("UIStroke")
+UISTROKE6.Parent = actionText
+UISTROKE6.Color = Color3.new(0,0,0)
+UISTROKE6.Thickness = 1
+actionText.Name = "CURRENTACTION"
+actionText.Visible = false
+actionText.AnchorPoint = Vector2.new(0.5,0.5)
+actionText.Position = UDim2.new(0.5,0,0.5,0)
+actionText.Size = UDim2.new(1,0,1,0)
+actionText.Text = ""
+actionText.TextSize = 20
+actionText.Font = Enum.Font.Code
+actionText.TextColor3 = Color3.fromRGB(255,255,255)
+actionText.BackgroundTransparency = 1
 
 local tweenInfo = TweenInfo.new(0.5,Enum.EasingStyle.Linear,Enum.EasingDirection.InOut)
 local loadFrame = Instance.new("Frame",ScreenGui)
@@ -68,12 +85,14 @@ ESPFOLDER.Parent = ScreenGui
 local ESPGUI = Instance.new("BillboardGui")
 local Armor = Instance.new("Frame")
 local PLAYERNAME = Instance.new("TextLabel")
+local DISPLAYNAME = Instance.new("TextLabel")
 local Health = Instance.new("Frame")
 local BOXUI = Instance.new("Frame")
 local UISTROKE1 = Instance.new("UIStroke")
 local UISTROKE2 = Instance.new("UIStroke")
 local UISTROKE3 = Instance.new("UIStroke")
 local UISTROKE4 = Instance.new("UIStroke")
+local UISTROKE5 = Instance.new("UIStroke")
 ESPGUI.Name = "ESPGUI"
 ESPGUI.Parent = game.Lighting
 ESPGUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -111,6 +130,24 @@ PLAYERNAME.TextWrapped = true
 UISTROKE2.Parent = PLAYERNAME
 UISTROKE2.Color = Color3.new(0,0,0)
 UISTROKE2.Thickness = 1
+DISPLAYNAME.Name = "DISPLAYNAME"
+DISPLAYNAME.Parent = ESPGUI
+DISPLAYNAME.AnchorPoint = Vector2.new(0.5, 0.5)
+DISPLAYNAME.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+DISPLAYNAME.BackgroundTransparency = 1.000
+DISPLAYNAME.BorderColor3 = Color3.fromRGB(0, 0, 0)
+DISPLAYNAME.BorderSizePixel = 0
+DISPLAYNAME.Position = UDim2.new(0.5, 0, 0.16, -5)
+DISPLAYNAME.Size = UDim2.new(0, 100, 0, 15)
+DISPLAYNAME.Font = Enum.Font.FredokaOne
+DISPLAYNAME.Text = ""
+DISPLAYNAME.TextColor3 = Color3.fromRGB(226, 226, 226)
+DISPLAYNAME.TextScaled = true
+DISPLAYNAME.TextSize = 14.000
+DISPLAYNAME.TextWrapped = true
+UISTROKE5.Parent = DISPLAYNAME
+UISTROKE5.Color = Color3.new(0,0,0)
+UISTROKE5.Thickness = 1
 Health.Name = "Health"
 Health.Parent = ESPGUI
 Health.AnchorPoint = Vector2.new(0, 1)
@@ -136,7 +173,7 @@ BOXUI.Size = UDim2.new(0.479999989, 0, 0.629999995, 0)
 BOXUI.Visible = false
 UISTROKE4.Parent = BOXUI
 UISTROKE4.Color = Color3.new(0,0,0)
-UISTROKE3.Thickness = 1
+UISTROKE4.Thickness = 1
 
 local ClientAnimations = ReplicatedStorage.ClientAnimations
 
@@ -165,14 +202,18 @@ local supermanFly = Instance.new('Animation')
 supermanFly.AnimationId = 'rbxassetid://3541044388'
 local supermanIdle = Instance.new('Animation')
 supermanIdle.AnimationId = 'rbxassetid://3541114300'
+local floss = Instance.new('Animation')
+floss.AnimationId = 'rbxassetid://10714340543'
 local supermanFlyAnim
 local supermanIdleAnim
+local flossAnim
 local function updateCharacter()
 	Character = Player.Character or Player.CharacterAdded:Wait()
 	HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 	Humanoid = Character:WaitForChild("Humanoid")
 	supermanFlyAnim = Humanoid:LoadAnimation(supermanFly)
 	supermanIdleAnim = Humanoid:LoadAnimation(supermanIdle)
+	flossAnim = Humanoid:LoadAnimation(floss)
 end
 
 Player.CharacterAdded:Connect(updateCharacter)
@@ -196,22 +237,24 @@ local Window = Library:CreateWindow({
 
 local Tabs = {
 	Main = Window:AddTab("main");
-	Target = Window:AddTab("target");
+	Character = Window:AddTab("character");
 	Visuals = Window:AddTab("visuals");
 	Teleport = Window:AddTab("teleport");
 	Settings = Window:AddTab("settings");
 }
 
-local CharacterSettingsGroupBox = Tabs.Main:AddLeftGroupbox('character settings')
-local MovementGroupBox = Tabs.Main:AddRightGroupbox('movement')
 local AimlockGroupBox = Tabs.Main:AddRightGroupbox('cam lock')
 local SilentAimGroupBox = Tabs.Main:AddLeftGroupbox('silent aim')
-local GunSettingsGroupBox = Tabs.Main:AddRightGroupbox('gun settings')
+local GunSettingsGroupBox = Tabs.Main:AddLeftGroupbox('gun settings')
 local RageBotGroupBox = Tabs.Main:AddLeftGroupbox('rage bot')
-local ViewGroupBox = Tabs.Main:AddRightGroupbox('view')
-local CFrameGroupBox = Tabs.Main:AddRightGroupbox('cframing')
+local ViewGroupBox = Tabs.Main:AddLeftGroupbox('view')
+local TargetGroupBox = Tabs.Main:AddRightGroupbox('target')
+local TargetStrafeGroupBox = Tabs.Main:AddLeftGroupbox('target strafe')
 
-local UISettingsGroupBox = Tabs.Settings:AddLeftGroupbox('ui settings')
+local CharacterSettingsGroupBox = Tabs.Character:AddLeftGroupbox('character settings')
+local MovementGroupBox = Tabs.Character:AddRightGroupbox('movement')
+local CFrameGroupBox = Tabs.Character:AddRightGroupbox('cframing')
+local EmotesGroupBox = Tabs.Character:AddLeftGroupbox('emotes')
 
 local VisualsGroupBox = Tabs.Visuals:AddLeftGroupbox('visuals')
 local DahoodUIGroupBox = Tabs.Visuals:AddLeftGroupbox('dahood ui')
@@ -222,8 +265,7 @@ local PlacesGroupBox = Tabs.Teleport:AddLeftGroupbox('places')
 local BuyGroupBox = Tabs.Teleport:AddRightGroupbox('buy')
 local TeleportPlayerGroupBox = Tabs.Teleport:AddLeftGroupbox('teleport player')
 
-local TargetStrafeGroupBox = Tabs.Target:AddLeftGroupbox('target strafe')
-local TargetGroupBox = Tabs.Target:AddRightGroupbox('target')
+local UISettingsGroupBox = Tabs.Settings:AddLeftGroupbox('ui settings')
 
 local PurchasableItems = {}
 for _,Item in ipairs(workspace:GetDescendants()) do
@@ -262,6 +304,8 @@ local function processQueue(Type)
 	end
 	while #itemsToPurchase > 0 do
 		task.wait()
+		HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero
+		HumanoidRootPart.AssemblyAngularVelocity = Vector3.zero
 		local item = table.remove(itemsToPurchase, 1)
 		if item and item.Parent and not Type then
 			local toolName = item.Name:match("%[.-%]")
@@ -269,7 +313,7 @@ local function processQueue(Type)
 				while not HasTool(toolName) do
 					Humanoid:UnequipTools()
 					HumanoidRootPart.CFrame = item.Head.CFrame * CFrame.new(0,3,0)
-					task.wait(0.1)
+					task.wait(0.13)
 					fireclickdetector(item.ClickDetector)
 				end
 			else
@@ -278,7 +322,7 @@ local function processQueue(Type)
 						while Character:FindFirstChild("BodyEffects") and Character.BodyEffects:FindFirstChild("Armor") and Character.BodyEffects.Armor.Value < 130 and Toggles.AutoArmor.Value do
 							Humanoid:UnequipTools()
 							HumanoidRootPart.CFrame = item.Head.CFrame * CFrame.new(0,3,0)
-							task.wait(0.1)
+							task.wait(0.13)
 							fireclickdetector(item.ClickDetector)
 						end
 					end
@@ -287,7 +331,7 @@ local function processQueue(Type)
 						while Character:FindFirstChild("BodyEffects") and Character.BodyEffects:FindFirstChild("Armor") and Character.BodyEffects.Armor.Value < 100 and Toggles.AutoArmor.Value do
 							Humanoid:UnequipTools()
 							HumanoidRootPart.CFrame = item.Head.CFrame * CFrame.new(0,3,0)
-							task.wait(0.1)
+							task.wait(0.13)
 							fireclickdetector(item.ClickDetector)
 						end
 					end
@@ -297,7 +341,7 @@ local function processQueue(Type)
 			if Type == "Ammo" then
 				Humanoid:UnequipTools()
 				HumanoidRootPart.CFrame = item.Head.CFrame * CFrame.new(0,3,0)
-				task.wait(0.1)
+				task.wait(0.13)
 				fireclickdetector(item.ClickDetector)
 			end
 		end
@@ -525,20 +569,28 @@ local function findClosestMatchingPlayer(inputName)
 end
 
 local function ShootGun(targetPlayer)
-	local targetHead = targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head")
-	local gun = GetEquippedGun()
-	if targetHead and gun and HumanoidRootPart then
-		if not targetPlayer.Character:FindFirstChild("BodyEffects")["K.O"].Value then
-			local args = {
-				[1] = "ShootGun",
-				[2] = gun:WaitForChild("Handle"),
-				[3] = HumanoidRootPart.Position,
-				[4] = targetHead.Position,
-				[5] = targetHead,
-				[6] = Vector3.zAxis
-			}
-			MainEvent:FireServer(unpack(args))
+	local success, err = pcall(function()
+		local targetHead = targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head")
+		local gun = GetEquippedGun()
+		if targetHead and gun and HumanoidRootPart then
+			local bodyEffects = targetPlayer.Character:FindFirstChild("BodyEffects")
+			if bodyEffects and bodyEffects:FindFirstChild("K.O") and not bodyEffects["K.O"].Value then
+				if gun:FindFirstChild("Handle") then
+					local args = {
+						[1] = "ShootGun",
+						[2] = gun:WaitForChild("Handle"),
+						[3] = HumanoidRootPart.Position,
+						[4] = targetHead.Position,
+						[5] = targetHead,
+						[6] = Vector3.zAxis
+					}
+					MainEvent:FireServer(unpack(args))
+				end
+			end
 		end
+	end)
+	if not success then
+		warn("Error in TryShootGun:", err)
 	end
 end
 
@@ -605,6 +657,7 @@ local function updateESPVisuals()
 	for _, ESPUI in ipairs(ESPFOLDER:GetChildren()) do
 		if ESPUI:IsA("BillboardGui") then
 			ESPUI.PLAYERNAME.Visible = Toggles.ESPUsername.Value
+			ESPGUI.DISPLAYNAME.Visible = Toggles.ESPDisplayname.Value
 			ESPUI.BOXUI.Visible = Toggles.ESPBox.Value
 			ESPUI.Health.Visible = Toggles.ESPHealthBar.Value
 			ESPUI.Armor.Visible = Toggles.ESPArmorBar.Value
@@ -650,7 +703,6 @@ CFrameGroupBox:AddToggle('Void',{
 	Mode = 'Toggle';
 	Text = 'void';
 	NoUI = false;
-
 	Callback = function(Value)
 		if Value == true then
 			originalCharacterPos = HumanoidRootPart.CFrame
@@ -677,6 +729,22 @@ CFrameGroupBox:AddSlider('VoidMoveDistance',{
 	Max = 5000;
 	Rounding = 0;
 	Compact = false;
+})
+
+EmotesGroupBox:AddToggle('FlossAnimation',{
+	Text = 'floss';
+	Default = false;
+	Callback = function(Value)
+		if Toggles.FlossAnimation.Value then
+			if not flossAnim.IsPlaying then
+				flossAnim:Play()
+			end
+		else
+			if flossAnim.IsPlaying then
+				flossAnim:Stop()
+			end
+		end
+	end,
 })
 
 CharacterSettingsGroupBox:AddToggle('Fling',{
@@ -905,6 +973,7 @@ VisualsGroupBox:AddToggle('ESPUsername',{
 	Text = 'show username';
 	Default = true;
 	Callback = function()
+		Toggles.ESPDisplayname:SetValue(false)
 		updateESPVisuals()
 	end,
 })
@@ -913,6 +982,7 @@ VisualsGroupBox:AddToggle('ESPDisplayname',{
 	Text = 'show displayname';
 	Default = false;
 	Callback = function()
+		Toggles.ESPUsername:SetValue(false)
 		updateESPVisuals()
 	end,
 })
@@ -1442,11 +1512,15 @@ TeleportPlayerGroupBox:AddButton({
 		if TeleportPlayerInputBox ~= '' and TeleportPlayerInputBox ~= ' ' then
 			local target = findClosestMatchingPlayer(TeleportPlayerInputBox)
 			if target then
+				HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero
+				HumanoidRootPart.AssemblyAngularVelocity = Vector3.zero
 				HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
 			end
-		elseif TeleportPlayerDropdown ~= '' and TeleportPlayerDropdown ~= ' ' then
+		elseif TeleportPlayerDropdown ~= '' and TeleportPlayerDropdown ~= ' ' and TeleportPlayerInputBox == '' then
 			local target = findClosestMatchingPlayer(TeleportPlayerDropdown)
 			if target then
+				HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero
+				HumanoidRootPart.AssemblyAngularVelocity = Vector3.zero
 				HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
 			end
 		end
@@ -1556,11 +1630,11 @@ TargetGroupBox:AddToggle('Target',{
 	NoUI = false;
 	Text = 'target';
 })
-
+local currentIndex = 1
 Options.TargetKey:OnClick(function()
-	--if not Options.TargetKey:GetState() then
-	--Camera.CameraSubject = Character
-	--end
+	Camera.CameraSubject = Character
+	actionText.Visible = false
+	currentIndex = 1
 end)
 
 TargetGroupBox:AddToggle('ViewKillingTarget',{
@@ -1570,9 +1644,7 @@ TargetGroupBox:AddToggle('ViewKillingTarget',{
 })
 
 Toggles.ViewKillingTarget:OnChanged(function()
-	if not Toggles.ViewKillingTarget.Value then
-		Camera.CameraSubject = Character
-	end
+	Camera.CameraSubject = Character
 end)
 
 TargetGroupBox:AddDropdown('Targets',{
@@ -1605,10 +1677,11 @@ local rifleAmmo = workspace:FindFirstChild("5 [Rifle Ammo] - $273", true)
 local function handleGun(target)
 	if Character:FindFirstChild("BodyEffects") and Character.BodyEffects:FindFirstChild("K.O") and not Character.BodyEffects['K.O'].Value then
 		local gun = GetGun(Options.TargetGunMode.Value)
-		if gun and gun.Parent ~= Character then
+		if not isPurchasing and gun and gun.Parent ~= Character and InventoryFolder[gun.Name].Value ~= '0' then
 			Humanoid:EquipTool(gun)
 		end
 		if not isPurchasing and gun and not target.Character.BodyEffects['K.O'].Value then
+			actionText.Text = 'shooting...'..target.Name
 			orbitAround(target)
 			ShootGun(target)
 		end
@@ -1618,10 +1691,11 @@ end
 local function handlePurchases()
 	if Character:FindFirstChild("BodyEffects") and Character.BodyEffects:FindFirstChild("K.O") and not Character.BodyEffects['K.O'].Value then
 		local gun = GetGun(Options.TargetGunMode.Value)
-		if gun and gun.Parent ~= Character then
+		if not isPurchasing and gun and gun.Parent ~= Character and InventoryFolder[gun.Name].Value ~= '0' then
 			Humanoid:EquipTool(gun)
 		end
 		if not gun then
+			actionText.Text = 'purchasing...'..Options.TargetGunMode.Value
 			if Options.TargetGunMode.Value == '[AUG]' then
 				purchaseItem(aug)
 			else
@@ -1630,6 +1704,7 @@ local function handlePurchases()
 		else
 			if InventoryFolder[gun.Name].Value == "0" and gun.Ammo.Value == 0 then
 				local gunName = gun.Name:match("%[(.-)%]")
+				actionText.Text = 'purchasing...ammo'
 				if gunName == 'Rifle' then
 					purchaseItem(rifleAmmo, 'Ammo')
 				elseif gunName == 'AUG' then
@@ -1650,20 +1725,25 @@ task.spawn(function()
 					if #targets == 1 then
 						local target = Players:FindFirstChild(targets[1])
 						if target and target.Character and target.Character:FindFirstChild('BodyEffects') then
+							actionText.Visible = true
 							if Toggles.ViewKillingTarget.Value then
-								Camera.CameraSubject = target.Character
+								Camera.CameraSubject = target.Character:FindFirstChild("Head")
 							end
 							handleGun(target)
 							handlePurchases()
 							if not isPurchasing and target.Character.BodyEffects['K.O'].Value and not target.Character.BodyEffects['Dead'].Value then
 								stompPlayer(target)
+								actionText.Text = 'stomping...'..target.Name
 							elseif not isPurchasing and gun and gun:FindFirstChild("Ammo").Value == 0 and not target.Character.BodyEffects['K.O'].Value then
 								void()
+								actionText.Text = 'voiding...reloading gun'
 							elseif not isPurchasing and target.Character.BodyEffects['Dead'].Value then
 								void()
+								actionText.Text = 'voiding...target dead'
 							end
 						end
 					elseif #targets > 1 then
+						actionText.Visible = true
 						local allDead = true
 						for _, name in ipairs(targets) do
 							local target = Players:FindFirstChild(name)
@@ -1679,25 +1759,34 @@ task.spawn(function()
 						end
 						if allDead then
 							void()
+							actionText.Text = 'voiding...all targets dead'
+							currentIndex = 1
 							return
 						end
-						local currentIndex = 1
 						local function processTarget()
-							if currentIndex > #targets then return end
+							if currentIndex > #targets then
+								currentIndex = 1
+								return
+							end
 							local target = Players:FindFirstChild(targets[currentIndex])
 							if target and target.Character and target.Character:FindFirstChild("BodyEffects") then
 								if Toggles.ViewKillingTarget.Value then
-									Camera.CameraSubject = target.Character
+									Camera.CameraSubject = target.Character:FindFirstChild("Head")
 								end
 								handleGun(target)
 								handlePurchases()
-								if not isPurchasing and target.Character.BodyEffects["K.O"].Value and not target.Character.BodyEffects["Dead"].Value then
-									stompPlayer(target)
-								elseif not isPurchasing and gun and gun:FindFirstChild("Ammo").Value == 0 and not target.Character.BodyEffects['K.O'].Value then
-									void()
-								elseif not isPurchasing and target.Character.BodyEffects["Dead"].Value then
-									currentIndex += 1
-									processTarget()
+								if gun then
+									if not isPurchasing and target.Character.BodyEffects["K.O"].Value and not target.Character.BodyEffects["Dead"].Value and InventoryFolder[gun.Name].Value ~= '0' then
+										stompPlayer(target)
+										actionText.Text = 'stomping...'..target.Name
+									elseif not isPurchasing and gun:FindFirstChild("Ammo").Value == 0 and InventoryFolder[gun.Name].Value ~= '0' and not target.Character.BodyEffects['K.O'].Value then
+										void()
+										actionText.Text = 'voiding...reloading gun'
+									elseif not isPurchasing and target.Character.BodyEffects["Dead"].Value then
+										actionText.Text = 'next target...'..target.Name..' is dead'
+										currentIndex += 1
+										processTarget()
+									end
 								end
 							else
 								currentIndex += 1
@@ -1709,7 +1798,6 @@ task.spawn(function()
 				end
 			end
 		end)
-
 		if not success then
 			warn("Error occurred in target loop:", err)
 		end
