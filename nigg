@@ -382,6 +382,36 @@ local function GetEquippedGun()
 	return nil
 end
 
+local function cSyncOrbitAndShoot(Target)
+	Camera.CameraSubject = workspace.camPart
+	local SavedCFrame = HumanoidRootPart.CFrame
+	local FakeCFrame = HumanoidRootPart.CFrame
+	local CurrentTime = tick()
+	FakeCFrame = CFrame.new(Target.Character.HumanoidRootPart.Position) * CFrame.Angles(0, 2 * math.pi * CurrentTime * 20 % (2 * math.pi), 0) * CFrame.new(0, -5, 0)
+	HumanoidRootPart.CFrame = FakeCFrame
+	ShootGun(Target)
+	RunService.RenderStepped:Wait()
+	HumanoidRootPart.CFrame = SavedCFrame
+	camPart.CFrame = SavedCFrame * CFrame.new(0,3,0)
+end
+
+
+local function voidDesync()
+	Camera.CameraSubject = workspace.camPart
+	local SavedCFrame = HumanoidRootPart.CFrame
+	local FakeCFrame = HumanoidRootPart.CFrame
+	local CurrentTime = tick()
+	local randomX = math.random(-1000000000,1000000000)
+	local randomZ = math.random(-1000000000,1000000000)
+	local randomY = math.random(-1000,1000) 
+	local newY = math.max(HumanoidRootPart.Position.Y + randomY, -1000)
+	FakeCFrame = CFrame.new(HumanoidRootPart.Position.X + randomX, newY, HumanoidRootPart.Position.Z + randomZ)
+	HumanoidRootPart.CFrame = FakeCFrame
+	RunService.RenderStepped:Wait()
+	HumanoidRootPart.CFrame = SavedCFrame
+	camPart.CFrame = SavedCFrame * CFrame.new(0,3,0)
+end
+
 local function GetGun(customGun)
 	local Tool
 	if customGun then
@@ -706,7 +736,6 @@ end)
 CFrameGroupBox:AddToggle('Desync',{
 	Text = 'desync';
 	Default = false;
-	Tooltip = 'desync your character on the server';
 }):AddKeyPicker('DesyncKey',{
 	Default = 'G';
 	Mode = 'Toggle';
@@ -714,10 +743,20 @@ CFrameGroupBox:AddToggle('Desync',{
 	NoUI = false;
 })
 
+Options.DesyncKey:OnClick(function()
+	Camera.CameraSubject = Character
+end)
+
+CFrameGroupBox:AddDropdown('DesyncMode',{
+	Values = {'void', 'glitch'};
+	Default = 1;
+	Mutli = false;
+	Text = 'desync mode';
+})
+
 CFrameGroupBox:AddToggle('Void',{
 	Text = 'void';
 	Default = false;
-	Tooltip = 'spam your cframe in void';
 }):AddKeyPicker('VoidKey',{
 	Default = 'Q';
 	Mode = 'Toggle';
@@ -1398,8 +1437,8 @@ SilentAimGroupBox:AddToggle('SilentAim',{
 	Text = 'silent aim';
 	Default = false;
 }):AddKeyPicker('SilentAimKey',{
-	Default = 'MB1';
-	Mode = 'Always';
+	Default = 'MB2';
+	Mode = 'Hold';
 	Text = 'silent aim';
 	NoUI = false;
 })
@@ -1573,19 +1612,6 @@ TargetStrafeGroupBox:AddToggle('ViewTargetStrafe',{
 	Tooltip = 'view target';
 })
 
-local function cSyncOrbitAndShoot(Target)
-	Camera.CameraSubject = workspace.camPart
-	local SavedCFrame = HumanoidRootPart.CFrame
-	local FakeCFrame = HumanoidRootPart.CFrame
-	local CurrentTime = tick()
-	FakeCFrame = CFrame.new(Target.Character.HumanoidRootPart.Position) * CFrame.Angles(0, 2 * math.pi * CurrentTime * 20 % (2 * math.pi), 0) * CFrame.new(0, -5, 0)
-	HumanoidRootPart.CFrame = FakeCFrame
-	ShootGun(Target)
-	RunService.RenderStepped:Wait()
-	HumanoidRootPart.CFrame = SavedCFrame
-	camPart.CFrame = SavedCFrame * CFrame.new(0,3,0)
-end
-
 RunService.Heartbeat:Connect(function()
 	local state = Options.TargetStrafeKey:GetState()
 	if state then
@@ -1594,6 +1620,18 @@ RunService.Heartbeat:Connect(function()
 			cSyncOrbitAndShoot(target)
 		elseif not target then
 			Camera.CameraSubject = Character
+		end
+	end
+end)
+
+RunService.Heartbeat:Connect(function()
+	local state = Options.DesyncKey:GetState()
+	if state then
+		local DesyncMode = Options.DesyncMode.Value
+		if DesyncMode then
+			if DesyncMode == "void" then
+				voidDesync()
+			end
 		end
 	end
 end)
@@ -2147,7 +2185,7 @@ task.spawn(function()
 				Mouse.TargetFilter = Character
 				if Mouse.Target then
 					if Mouse.Target.Parent then
-						if Mouse.Target.Parent:FindFirstChildOfClass("Humanoid") then
+						if Mouse.Target.Parent:FindFirstChildOfClass("Humanoid") and Mouse.Target.Parent:FindFirstChild("HumanoidRootPart") or Mouse.Target.Parent.Parent:FindFirstChildOfClass("Humanoid") or Mouse.Target.Parent.Parent:FindFirstChild("HumanoidRootPart") then
 							local friendCheck = checkFriend(Players:FindFirstChild(Mouse.Target.Parent.Name),Toggles.TriggerBotFriendCheck.Value)
 							if not friendCheck then
 								gun:Activate()
