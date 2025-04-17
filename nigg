@@ -105,8 +105,8 @@ Armor.AnchorPoint = Vector2.new(1, 1)
 Armor.BackgroundColor3 = Color3.fromRGB(20, 190, 199)
 Armor.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Armor.BorderSizePixel = 0
-Armor.Position = UDim2.new(0.24, -5,0.825, 0)
-Armor.Size = UDim2.new(0.0250000004, 4, 0.629999995, 4)
+Armor.Position = UDim2.new(0.24, -5,0.805, 0)
+Armor.Size = UDim2.new(0.025, 4, 0.6, 3)
 Armor.Visible = false
 Armor.ZIndex = 3
 UISTROKE1.Parent = Armor
@@ -127,6 +127,7 @@ PLAYERNAME.TextColor3 = Color3.fromRGB(226, 226, 226)
 PLAYERNAME.TextScaled = true
 PLAYERNAME.TextSize = 14.000
 PLAYERNAME.TextWrapped = true
+PLAYERNAME.Visible = false
 UISTROKE2.Parent = PLAYERNAME
 UISTROKE2.Color = Color3.new(0,0,0)
 UISTROKE2.Thickness = 1
@@ -145,6 +146,7 @@ DISPLAYNAME.TextColor3 = Color3.fromRGB(226, 226, 226)
 DISPLAYNAME.TextScaled = true
 DISPLAYNAME.TextSize = 14.000
 DISPLAYNAME.TextWrapped = true
+DISPLAYNAME.Visible = false
 UISTROKE5.Parent = DISPLAYNAME
 UISTROKE5.Color = Color3.new(0,0,0)
 UISTROKE5.Thickness = 1
@@ -154,8 +156,8 @@ Health.AnchorPoint = Vector2.new(0, 1)
 Health.BackgroundColor3 = Color3.fromRGB(0, 199, 46)
 Health.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Health.BorderSizePixel = 0
-Health.Position = UDim2.new(0.76, 5,0.825, 0)
-Health.Size = UDim2.new(0.0250000004, 4, 0.629999995, 4)
+Health.Position = UDim2.new(0.76, 5,0.805, 0)
+Health.Size = UDim2.new(0.025, 4, 0.6, 3)
 Health.Visible = false
 Health.ZIndex = 3
 UISTROKE3.Parent = Health
@@ -169,7 +171,7 @@ BOXUI.BackgroundTransparency = 1.000
 BOXUI.BorderColor3 = Color3.fromRGB(0, 0, 0)
 BOXUI.BorderSizePixel = 0
 BOXUI.Position = UDim2.new(0.5, 0, 0.5, 0)
-BOXUI.Size = UDim2.new(0.479999989, 0, 0.629999995, 0)
+BOXUI.Size = UDim2.new(0.45, 0, 0.6, 0)
 BOXUI.Visible = false
 UISTROKE4.Parent = BOXUI
 UISTROKE4.Color = Color3.new(0,0,0)
@@ -190,6 +192,7 @@ local InventoryFolder = DataFolder:WaitForChild("Inventory")
 
 local originalCharacterPos = nil
 local gettingHealth = false
+local flossAnimPlaying = false
 
 local MainEvent = ReplicatedStorage:FindFirstChild("MainEvent")
 
@@ -214,6 +217,9 @@ local function updateCharacter()
 	supermanFlyAnim = Humanoid:LoadAnimation(supermanFly)
 	supermanIdleAnim = Humanoid:LoadAnimation(supermanIdle)
 	flossAnim = Humanoid:LoadAnimation(floss)
+	if flossAnimPlaying then
+		flossAnim:Play()
+	end
 end
 
 Player.CharacterAdded:Connect(updateCharacter)
@@ -446,15 +452,21 @@ local function GetGun(customGun)
 end
 
 local function checkCrew(targetPlayer)
+	if not targetPlayer or not targetPlayer:IsDescendantOf(game.Players) then
+		return false
+	end
 	local success, result = pcall(function()
 		local OurInformation = DataFolder:FindFirstChild("Information")
-		local TheirInformation = targetPlayer:WaitForChild("DataFolder"):FindFirstChild("Information")
-		if not OurInformation or not TheirInformation then 
+		local theirDataFolder = targetPlayer:FindFirstChild("DataFolder")
+		if not OurInformation or not theirDataFolder then
+			return false
+		end
+		local TheirInformation = theirDataFolder:FindFirstChild("Information")
+		if not TheirInformation then
 			return false
 		end
 		local ourCrew = OurInformation:FindFirstChild("Crew")
 		local theirCrew = TheirInformation:FindFirstChild("Crew")
-
 		if not ourCrew or not theirCrew then 
 			return false 
 		end
@@ -655,7 +667,14 @@ local function createESP(target)
 		ESPGUICLONE.Parent = ESPFOLDER
 		ESPGUICLONE.Name = target.Name
 		ESPGUICLONE.PLAYERNAME.Text = target.Name
-		ESPGUICLONE.PLAYERNAME.Visible = Toggles.ESPUsername.Value
+		ESPGUICLONE.DISPLAYNAME.Text = target.DisplayName
+		if Options.ESPDisplayType.Value == 'username' then
+			ESPGUICLONE.PLAYERNAME.Visible = true
+			ESPGUICLONE.DISPLAYNAME.Visible = false
+		else
+			ESPGUICLONE.PLAYERNAME.Visible = false
+			ESPGUICLONE.DISPLAYNAME.Visible = true
+		end
 		ESPGUICLONE.BOXUI.Visible = Toggles.ESPBox.Value
 		ESPGUICLONE.Health.Visible = Toggles.ESPHealthBar.Value
 		ESPGUICLONE.Armor.Visible = Toggles.ESPArmorBar.Value
@@ -706,8 +725,13 @@ end
 local function updateESPVisuals()
 	for _, ESPUI in ipairs(ESPFOLDER:GetChildren()) do
 		if ESPUI:IsA("BillboardGui") then
-			ESPUI.PLAYERNAME.Visible = Toggles.ESPUsername.Value
-			ESPGUI.DISPLAYNAME.Visible = Toggles.ESPDisplayname.Value
+			if Options.ESPDisplayType.Value == 'username' then
+				ESPUI.PLAYERNAME.Visible = true
+				ESPUI.DISPLAYNAME.Visible = false
+			else
+				ESPUI.PLAYERNAME.Visible = false
+				ESPUI.DISPLAYNAME.Visible = true
+			end
 			ESPUI.BOXUI.Visible = Toggles.ESPBox.Value
 			ESPUI.Health.Visible = Toggles.ESPHealthBar.Value
 			ESPUI.Armor.Visible = Toggles.ESPArmorBar.Value
@@ -797,10 +821,12 @@ EmotesGroupBox:AddToggle('FlossAnimation',{
 		if Toggles.FlossAnimation.Value then
 			if not flossAnim.IsPlaying then
 				flossAnim:Play()
+				flossAnimPlaying = true
 			end
 		else
 			if flossAnim.IsPlaying then
 				flossAnim:Stop()
+				flossAnimPlaying = false
 			end
 		end
 	end,
@@ -1028,20 +1054,12 @@ VisualsGroupBox:AddToggle('ESPTracer',{
 	Default = false;
 })
 
-VisualsGroupBox:AddToggle('ESPUsername',{
-	Text = 'show username';
-	Default = true;
-	Callback = function()
-		Toggles.ESPDisplayname:SetValue(false)
-		updateESPVisuals()
-	end,
-})
-
-VisualsGroupBox:AddToggle('ESPDisplayname',{
-	Text = 'show displayname';
-	Default = false;
-	Callback = function()
-		Toggles.ESPUsername:SetValue(false)
+VisualsGroupBox:AddDropdown('ESPDisplayType',{
+	Values = {'username','displayname'};
+	Default = 1;
+	Multi = false;
+	Text = 'display type';
+	Callback = function(Value)
 		updateESPVisuals()
 	end,
 })
