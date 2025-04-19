@@ -318,8 +318,8 @@ local function processQueue(Type,gunName)
 			if not string.find(toolName,'Armor') then
 				while not HasTool(toolName) do
 					Humanoid:UnequipTools()
-					HumanoidRootPart.CFrame = item.Head.CFrame * CFrame.new(0,3,0)
-					task.wait(0.13)
+					HumanoidRootPart.CFrame = item.Head.CFrame * CFrame.new(0,0,0)
+					task.wait(0.087)
 					fireclickdetector(item.ClickDetector)
 				end
 			else
@@ -328,8 +328,8 @@ local function processQueue(Type,gunName)
 						while Character:FindFirstChild("BodyEffects") and Character.BodyEffects:FindFirstChild("Armor") and Character.BodyEffects.Armor.Value < 130 and Toggles.AutoArmor.Value do
 							actionText.Text = 'purchasing...high medium armor'
 							Humanoid:UnequipTools()
-							HumanoidRootPart.CFrame = item.Head.CFrame * CFrame.new(0,3,0)
-							task.wait(0.13)
+							HumanoidRootPart.CFrame = item.Head.CFrame * CFrame.new(0,0,0)
+							task.wait(0.087)
 							fireclickdetector(item.ClickDetector)
 						end
 					end
@@ -338,8 +338,8 @@ local function processQueue(Type,gunName)
 						while Character:FindFirstChild("BodyEffects") and Character.BodyEffects:FindFirstChild("Armor") and Character.BodyEffects.Armor.Value < 100 and Toggles.AutoArmor.Value do
 							actionText.Text = 'purchasing...medium armor'
 						Humanoid:UnequipTools()
-							HumanoidRootPart.CFrame = item.Head.CFrame * CFrame.new(0,3,0)
-							task.wait(0.13)
+							HumanoidRootPart.CFrame = item.Head.CFrame * CFrame.new(0,0,0)
+							task.wait(0.087)
 							fireclickdetector(item.ClickDetector)
 						end
 					end
@@ -350,8 +350,8 @@ local function processQueue(Type,gunName)
 				local initialValue = InventoryFolder[gunName].Value
 				while InventoryFolder[gunName].Value <= initialValue do
 					Humanoid:UnequipTools()
-					HumanoidRootPart.CFrame = item.Head.CFrame * CFrame.new(0, 3, 0)
-					task.wait(0.13)
+					HumanoidRootPart.CFrame = item.Head.CFrame * CFrame.new(0,0,0)
+					task.wait(0.087)
 					fireclickdetector(item.ClickDetector)
 				end
 			end
