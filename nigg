@@ -85,7 +85,7 @@ ESPFOLDER.Parent = ScreenGui
 local ESPGUI = Instance.new("BillboardGui")
 local Armor = Instance.new("Frame")
 local PLAYERNAME = Instance.new("TextLabel")
-local DISPLAYNAME = Instance.new("TextLabel")
+local BOTTOMTEXT = Instance.new("TextLabel")
 local Health = Instance.new("Frame")
 local BOXUI = Instance.new("Frame")
 local UISTROKE1 = Instance.new("UIStroke")
@@ -121,7 +121,7 @@ PLAYERNAME.BorderColor3 = Color3.fromRGB(0, 0, 0)
 PLAYERNAME.BorderSizePixel = 0
 PLAYERNAME.Position = UDim2.new(0.5, 0, 0.16, -5)
 PLAYERNAME.Size = UDim2.new(0, 100, 0, 15)
-PLAYERNAME.Font = Enum.Font.FredokaOne
+PLAYERNAME.Font = Enum.Font.Code
 PLAYERNAME.Text = ""
 PLAYERNAME.TextColor3 = Color3.fromRGB(226, 226, 226)
 PLAYERNAME.TextScaled = true
@@ -131,23 +131,23 @@ PLAYERNAME.Visible = false
 UISTROKE2.Parent = PLAYERNAME
 UISTROKE2.Color = Color3.new(0,0,0)
 UISTROKE2.Thickness = 1
-DISPLAYNAME.Name = "DISPLAYNAME"
-DISPLAYNAME.Parent = ESPGUI
-DISPLAYNAME.AnchorPoint = Vector2.new(0.5, 0.5)
-DISPLAYNAME.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-DISPLAYNAME.BackgroundTransparency = 1.000
-DISPLAYNAME.BorderColor3 = Color3.fromRGB(0, 0, 0)
-DISPLAYNAME.BorderSizePixel = 0
-DISPLAYNAME.Position = UDim2.new(0.5, 0, 0.16, -5)
-DISPLAYNAME.Size = UDim2.new(0, 100, 0, 15)
-DISPLAYNAME.Font = Enum.Font.FredokaOne
-DISPLAYNAME.Text = ""
-DISPLAYNAME.TextColor3 = Color3.fromRGB(226, 226, 226)
-DISPLAYNAME.TextScaled = true
-DISPLAYNAME.TextSize = 14.000
-DISPLAYNAME.TextWrapped = true
-DISPLAYNAME.Visible = false
-UISTROKE5.Parent = DISPLAYNAME
+BOTTOMTEXT.Name = "BOTTOMTEXT"
+BOTTOMTEXT.Parent = ESPGUI
+BOTTOMTEXT.AnchorPoint = Vector2.new(0.5, 0.5)
+BOTTOMTEXT.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+BOTTOMTEXT.BackgroundTransparency = 1.000
+BOTTOMTEXT.BorderColor3 = Color3.fromRGB(0, 0, 0)
+BOTTOMTEXT.BorderSizePixel = 0
+BOTTOMTEXT.Position = UDim2.new(0.5, 0,0.83, 5)
+BOTTOMTEXT.Size = UDim2.new(0, 100, 0, 15)
+BOTTOMTEXT.Font = Enum.Font.Code
+BOTTOMTEXT.Text = ""
+BOTTOMTEXT.TextColor3 = Color3.fromRGB(226, 226, 226)
+BOTTOMTEXT.TextScaled = true
+BOTTOMTEXT.TextSize = 14.000
+BOTTOMTEXT.TextWrapped = true
+BOTTOMTEXT.Visible = false
+UISTROKE5.Parent = BOTTOMTEXT
 UISTROKE5.Color = Color3.new(0,0,0)
 UISTROKE5.Thickness = 1
 Health.Name = "Health"
@@ -301,7 +301,7 @@ end
 
 local itemsToPurchase = {}
 local isPurchasing = false
-local function processQueue(Type)
+local function processQueue(Type,gunName)
 	local equippedTool
 	if isPurchasing or #itemsToPurchase == 0 then return end
 	isPurchasing = true
@@ -326,6 +326,7 @@ local function processQueue(Type)
 				if string.find(toolName,'[High-Medium Armor]') then
 					if Character:FindFirstChild("BodyEffects") and Character.BodyEffects:FindFirstChild("Armor") and Character.BodyEffects.Armor.Value < 130 then
 						while Character:FindFirstChild("BodyEffects") and Character.BodyEffects:FindFirstChild("Armor") and Character.BodyEffects.Armor.Value < 130 and Toggles.AutoArmor.Value do
+							actionText.Text = 'purchasing...high medium armor'
 							Humanoid:UnequipTools()
 							HumanoidRootPart.CFrame = item.Head.CFrame * CFrame.new(0,3,0)
 							task.wait(0.13)
@@ -335,7 +336,8 @@ local function processQueue(Type)
 				elseif string.find(toolName,'[Medium Armor]') then
 					if Character:FindFirstChild("BodyEffects") and Character.BodyEffects:FindFirstChild("Armor") and Character.BodyEffects.Armor.Value < 100 then
 						while Character:FindFirstChild("BodyEffects") and Character.BodyEffects:FindFirstChild("Armor") and Character.BodyEffects.Armor.Value < 100 and Toggles.AutoArmor.Value do
-							Humanoid:UnequipTools()
+							actionText.Text = 'purchasing...medium armor'
+						Humanoid:UnequipTools()
 							HumanoidRootPart.CFrame = item.Head.CFrame * CFrame.new(0,3,0)
 							task.wait(0.13)
 							fireclickdetector(item.ClickDetector)
@@ -343,12 +345,15 @@ local function processQueue(Type)
 					end
 				end
 			end
-		elseif item and item.Parent and Type then
+		elseif item and item.Parent and Type and gunName then
 			if Type == "Ammo" then
-				Humanoid:UnequipTools()
-				HumanoidRootPart.CFrame = item.Head.CFrame * CFrame.new(0,3,0)
-				task.wait(0.13)
-				fireclickdetector(item.ClickDetector)
+				local initialValue = InventoryFolder[gunName].Value
+				while InventoryFolder[gunName].Value <= initialValue do
+					Humanoid:UnequipTools()
+					HumanoidRootPart.CFrame = item.Head.CFrame * CFrame.new(0, 3, 0)
+					task.wait(0.13)
+					fireclickdetector(item.ClickDetector)
+				end
 			end
 		end
 	end
@@ -361,13 +366,13 @@ local function processQueue(Type)
 	end
 end
 
-local function purchaseItem(item,Type)
+local function purchaseItem(item,Type,gunName)
 	for _, v in ipairs(itemsToPurchase) do
 		if v == item then return end
 	end
 	table.insert(itemsToPurchase, item)
 	if Type then
-		processQueue(Type)
+		processQueue(Type,gunName)
 	else
 		processQueue()
 	end
@@ -386,6 +391,42 @@ local function GetEquippedGun()
 		end
 	end
 	return nil
+end
+
+local function GetEquippedTool(character)
+	local Tool
+	for _, v in pairs(character:GetChildren()) do 
+		if v:IsA("Tool") then
+			return v
+		end
+	end
+	return nil
+end
+
+local function ShootGun(targetPlayer)
+	local success, err = pcall(function()
+		local targetHead = targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head")
+		local gun = GetEquippedGun()
+		if targetHead and gun and HumanoidRootPart then
+			local bodyEffects = targetPlayer.Character:FindFirstChild("BodyEffects")
+			if bodyEffects and bodyEffects:FindFirstChild("K.O") and not bodyEffects["K.O"].Value then
+				if gun:FindFirstChild("Handle") then
+					local args = {
+						[1] = "ShootGun",
+						[2] = gun:WaitForChild("Handle"),
+						[3] = HumanoidRootPart.Position,
+						[4] = targetHead.Position,
+						[5] = targetHead,
+						[6] = Vector3.zAxis
+					}
+					MainEvent:FireServer(unpack(args))
+				end
+			end
+		end
+	end)
+	if not success then
+		warn("Error in TryShootGun:", err)
+	end
 end
 
 local function cSyncOrbitAndShoot(Target)
@@ -407,15 +448,20 @@ local function voidDesync()
 	local SavedCFrame = HumanoidRootPart.CFrame
 	local FakeCFrame = HumanoidRootPart.CFrame
 	local CurrentTime = tick()
-	local randomX = math.random(-1000000000,1000000000)
-	local randomZ = math.random(-1000000000,1000000000)
-	local randomY = math.random(-1000,1000) 
-	local newY = math.max(HumanoidRootPart.Position.Y + randomY, -1000)
-	FakeCFrame = CFrame.new(HumanoidRootPart.Position.X + randomX, newY, HumanoidRootPart.Position.Z + randomZ)
+	local randomX = math.random(-10000000000000, 10000000000000)
+	local randomZ = math.random(-10000000000000, 10000000000000)
+	local baseY = HumanoidRootPart.Position.Y
+	local randomY = math.random(-10000000000000, 10000000000000)
+	local newY = math.max(baseY + randomY, 10000000)
+	FakeCFrame = CFrame.new(
+		HumanoidRootPart.Position.X + randomX,
+		newY,
+		HumanoidRootPart.Position.Z + randomZ
+	)
 	HumanoidRootPart.CFrame = FakeCFrame
 	RunService.RenderStepped:Wait()
 	HumanoidRootPart.CFrame = SavedCFrame
-	camPart.CFrame = SavedCFrame * CFrame.new(0,3,0)
+	camPart.CFrame = SavedCFrame * CFrame.new(0, 2.5, 0)
 end
 
 local function GetGun(customGun)
@@ -536,7 +582,7 @@ local function GetClosestPlayerToCharacter()
 end
 
 
-local function GetClosestPlayerToMouse(wallcheck,downCheck)
+local function GetClosestPlayerToMouse()
 	local closestPlayer = nil
 	local shortestDistance = math.huge
 	local mousePos = Vector2.new(Mouse.X, Mouse.Y)
@@ -549,25 +595,53 @@ local function GetClosestPlayerToMouse(wallcheck,downCheck)
 			if Head then
 				local worldPos = otherPlayer.Character.HumanoidRootPart.Position
 				local screenPos, onScreen = Camera:WorldToViewportPoint(worldPos)
-
 				if onScreen then
 					local screenVector = Vector2.new(screenPos.X, screenPos.Y)
 					local distance = (screenVector - mousePos).Magnitude
-					if wallcheck then
-						local origin = Camera.CFrame.Position
-						local direction = Head.Position - origin
-						local result = workspace:Raycast(origin, direction, rayParams)
+					if distance < shortestDistance then
+						shortestDistance = distance
+						closestPlayer = otherPlayer
+					end
+				end
+			end
+		end
+	end
+	return closestPlayer
+end
 
-						if not result or result.Instance:IsDescendantOf(otherPlayer.Character) then
+local function GetClosestPlayerToRadius(wallcheck)
+	local closestPlayer = nil
+	local shortestDistance = math.huge
+	local mouseLocation = UserInputService:GetMouseLocation()
+	local mousePos = Vector2.new(mouseLocation.X, mouseLocation.Y)
+	local rayParams = RaycastParams.new()
+	rayParams.FilterDescendantsInstances = {Player.Character}
+	rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+	for _, otherPlayer in ipairs(Players:GetPlayers()) do
+		if otherPlayer ~= Player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") and otherPlayer.Character:FindFirstChild("BodyEffects") and otherPlayer.Character.BodyEffects:FindFirstChild("K.O") and otherPlayer.Character.BodyEffects:FindFirstChild("Dead") then
+			local Head = otherPlayer.Character:FindFirstChild("Head")
+			if Head then
+				local worldPos = otherPlayer.Character.HumanoidRootPart.Position
+				local screenPos, onScreen = Camera:WorldToViewportPoint(worldPos)
+				if onScreen then
+					local screenVector = Vector2.new(screenPos.X, screenPos.Y)
+					local distance = (screenVector - mousePos).Magnitude
+					if distance <= Options.CircleRadius.Value then
+						if wallcheck then
+							local origin = Camera.CFrame.Position
+							local direction = Head.Position - origin
+							local result = workspace:Raycast(origin, direction, rayParams)
+							if not result or result.Instance:IsDescendantOf(otherPlayer.Character) then
+								if distance < shortestDistance then
+									shortestDistance = distance
+									closestPlayer = otherPlayer
+								end
+							end
+						else
 							if distance < shortestDistance then
 								shortestDistance = distance
 								closestPlayer = otherPlayer
 							end
-						end
-					else
-						if distance < shortestDistance then
-							shortestDistance = distance
-							closestPlayer = otherPlayer
 						end
 					end
 				end
@@ -630,33 +704,8 @@ local function findClosestMatchingPlayer(inputName)
 	return nil
 end
 
-local function ShootGun(targetPlayer)
-	local success, err = pcall(function()
-		local targetHead = targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head")
-		local gun = GetEquippedGun()
-		if targetHead and gun and HumanoidRootPart then
-			local bodyEffects = targetPlayer.Character:FindFirstChild("BodyEffects")
-			if bodyEffects and bodyEffects:FindFirstChild("K.O") and not bodyEffects["K.O"].Value then
-				if gun:FindFirstChild("Handle") then
-					local args = {
-						[1] = "ShootGun",
-						[2] = gun:WaitForChild("Handle"),
-						[3] = HumanoidRootPart.Position,
-						[4] = targetHead.Position,
-						[5] = targetHead,
-						[6] = Vector3.zAxis
-					}
-					MainEvent:FireServer(unpack(args))
-				end
-			end
-		end
-	end)
-	if not success then
-		warn("Error in TryShootGun:", err)
-	end
-end
-
 local espConnections = {}
+local bottomConnection
 local function createESP(target)
 	local existingESP = ESPFOLDER:FindFirstChild(target.Name)
 	if existingESP then
@@ -666,18 +715,21 @@ local function createESP(target)
 	if ESPGUICLONE then
 		ESPGUICLONE.Parent = ESPFOLDER
 		ESPGUICLONE.Name = target.Name
-		ESPGUICLONE.PLAYERNAME.Text = target.Name
-		ESPGUICLONE.DISPLAYNAME.Text = target.DisplayName
 		if Options.ESPDisplayType.Value == 'username' then
-			ESPGUICLONE.PLAYERNAME.Visible = true
-			ESPGUICLONE.DISPLAYNAME.Visible = false
+			ESPGUICLONE.PLAYERNAME.Text = target.Name
 		else
-			ESPGUICLONE.PLAYERNAME.Visible = false
-			ESPGUICLONE.DISPLAYNAME.Visible = true
+			ESPGUICLONE.PLAYERNAME.Text = target.DisplayName
 		end
+		ESPGUICLONE.PLAYERNAME.Visible = true
+		ESPGUICLONE.BOTTOMTEXT.Visible = Toggles.ESPBottomText.Value
 		ESPGUICLONE.BOXUI.Visible = Toggles.ESPBox.Value
 		ESPGUICLONE.Health.Visible = Toggles.ESPHealthBar.Value
 		ESPGUICLONE.Armor.Visible = Toggles.ESPArmorBar.Value
+		ESPGUICLONE.PLAYERNAME.TextColor3 = Options.NameTextColor.Value
+		ESPGUICLONE.Armor.BackgroundColor3 = Options.ArmorBarColor.Value
+		ESPGUICLONE.Health.BackgroundColor3 = Options.HealthBarColor.Value
+		ESPGUICLONE.BOXUI.UIStroke.Color = Options.BoxColor.Value
+		ESPGUICLONE.BOTTOMTEXT.TextColor3 = Options.BottomTextColor.Value
 		ESPGUICLONE.Enabled = true
 		local function updateESP(character)
 			local hrp = character:WaitForChild("UpperTorso", 6)
@@ -687,10 +739,10 @@ local function createESP(target)
 				if humanoid then
 					local function UpdateHealth()
 						local HealthPercent = humanoid.Health / math.max(humanoid.MaxHealth, 1)
-						local newSizeY = HealthPercent * 0.63
+						local newSizeY = HealthPercent * 0.6
 						if ESPGUICLONE:FindFirstChild("Health") then
 							local newSize = UDim2.new(ESPGUICLONE.Health.Size.X.Scale, 3, newSizeY, 4)
-							local newPosition = UDim2.new(ESPGUICLONE.Health.Position.X.Scale, 5, 0.825, 0)
+							local newPosition = UDim2.new(ESPGUICLONE.Health.Position.X.Scale, 5, 0.805, 0)
 
 							ESPGUICLONE.Health:TweenSizeAndPosition(newSize, newPosition, Enum.EasingDirection.Out, Enum.EasingStyle.Linear, 0.15, true)
 						end
@@ -701,10 +753,10 @@ local function createESP(target)
 				if character:WaitForChild("BodyEffects") and character.BodyEffects:WaitForChild("Armor") then
 					local function UpdateArmor()
 						local ArmorPercent = character:WaitForChild("BodyEffects").Armor.Value / math.max(130, 1)
-						local newSizeY = ArmorPercent * 0.63
+						local newSizeY = ArmorPercent * 0.6
 						if ESPGUICLONE:FindFirstChild("Armor") then
 							local newSize = UDim2.new(ESPGUICLONE.Armor.Size.X.Scale, 3, newSizeY, 4)
-							local newPosition = UDim2.new(ESPGUICLONE.Armor.Position.X.Scale, -5, 0.825, 0)
+							local newPosition = UDim2.new(ESPGUICLONE.Armor.Position.X.Scale, -5, 0.805, 0)
 
 							ESPGUICLONE.Armor:TweenSizeAndPosition(newSize, newPosition, Enum.EasingDirection.Out, Enum.EasingStyle.Linear, 0.15, true)
 						end
@@ -712,6 +764,24 @@ local function createESP(target)
 					character:WaitForChild("BodyEffects").Armor.Changed:Connect(UpdateArmor)
 					UpdateArmor()
 				end
+				local function updateBottomText()
+					local BottomText = ESPGUICLONE:WaitForChild("BOTTOMTEXT")
+					if not BottomText then return end
+					if Options.ESPBottomText.Value == "distance" then
+						if character and character:FindFirstChild("HumanoidRootPart") and hrp then
+							local dist = (character.HumanoidRootPart.Position - HumanoidRootPart.Position).Magnitude
+							BottomText.Text = '[' .. math.floor(dist) .. '] studs'
+						end
+					else
+						local currentTool = GetEquippedTool(character)
+						if currentTool then
+							BottomText.Text = currentTool.Name
+						else
+							BottomText.Text = '[None]'
+						end
+					end
+				end
+				bottomConnection = RunService.Heartbeat:Connect(updateBottomText)
 			end
 		end
 		local charAddedConn = target.CharacterAdded:Connect(updateESP)
@@ -725,17 +795,26 @@ end
 local function updateESPVisuals()
 	for _, ESPUI in ipairs(ESPFOLDER:GetChildren()) do
 		if ESPUI:IsA("BillboardGui") then
+			local target = Players:FindFirstChild(ESPUI.Name)
 			if Options.ESPDisplayType.Value == 'username' then
-				ESPUI.PLAYERNAME.Visible = true
-				ESPUI.DISPLAYNAME.Visible = false
+				ESPUI.PLAYERNAME.Text = target.Name
 			else
-				ESPUI.PLAYERNAME.Visible = false
-				ESPUI.DISPLAYNAME.Visible = true
+				ESPUI.PLAYERNAME.Text = target.DisplayName
+			end
+			ESPUI.PLAYERNAME.Visible = true
+			ESPUI.BOTTOMTEXT.Visible = Toggles.ESPBottomText.Value
+			if not Toggles.ESPBottomText.Value then
+				bottomConnection:Disconnect()
 			end
 			ESPUI.BOXUI.Visible = Toggles.ESPBox.Value
 			ESPUI.Health.Visible = Toggles.ESPHealthBar.Value
 			ESPUI.Armor.Visible = Toggles.ESPArmorBar.Value
 			ESPUI.AlwaysOnTop = Toggles.ESPAlwaysOnTop.Value
+			ESPUI.PLAYERNAME.TextColor3 = Options.NameTextColor.Value
+			ESPUI.Armor.BackgroundColor3 = Options.ArmorBarColor.Value
+			ESPUI.Health.BackgroundColor3 = Options.HealthBarColor.Value
+			ESPUI.BOXUI.UIStroke.Color = Options.BoxColor.Value
+			ESPUI.BOTTOMTEXT.TextColor3 = Options.BottomTextColor.Value
 		end
 	end
 end
@@ -809,7 +888,7 @@ CFrameGroupBox:AddSlider('VoidMoveDistance',{
 	Text = 'void move distance';
 	Default = 50000;
 	Min = 50;
-	Max = 10000000000;
+	Max = 1000000000;
 	Rounding = 0;
 	Compact = false;
 })
@@ -832,6 +911,25 @@ EmotesGroupBox:AddToggle('FlossAnimation',{
 	end,
 })
 
+local flingThread
+local hiddenFling = false
+local function fling()
+	local vel, movel = nil, 0.1
+	while hiddenFling do
+		print('yes')
+		RunService.Heartbeat:Wait()
+		if HumanoidRootPart then
+			vel = HumanoidRootPart.Velocity
+			HumanoidRootPart.Velocity = vel * 10000 + Vector3.new(0, 10000, 0)
+			RunService.RenderStepped:Wait()
+			HumanoidRootPart.Velocity = vel
+			RunService.Stepped:Wait()
+			HumanoidRootPart.Velocity = vel + Vector3.new(0, movel, 0)
+			movel = -movel
+		end
+	end
+end
+
 CharacterSettingsGroupBox:AddToggle('Fling',{
 	Text = 'fling';
 	Default = false;
@@ -840,6 +938,16 @@ CharacterSettingsGroupBox:AddToggle('Fling',{
 	Mode = 'Toggle';
 	Text = 'fling';
 	NoUI = false;
+	Callback = function(Value)
+		local state = Options.FlingKey:GetState()
+		hiddenFling = state
+		if state then
+			flingThread = coroutine.create(fling)
+			coroutine.resume(flingThread)
+		else
+			hiddenFling = false
+		end
+	end,
 })
 
 CharacterSettingsGroupBox:AddToggle('AntiStomp',{
@@ -1047,11 +1155,64 @@ VisualsGroupBox:AddToggle('ESPBox',{
 	Callback = function()
 		updateESPVisuals()
 	end,
+}):AddColorPicker('BoxColor', {
+	Default = Color3.new(0, 0, 0),
+	Callback = function(Value)
+		updateESPVisuals()
+	end
 })
 
 VisualsGroupBox:AddToggle('ESPTracer',{
 	Text = 'tracer';
 	Default = false;
+}):AddColorPicker('TracerColor', {
+	Default = Color3.new(1, 1, 1),
+})
+
+VisualsGroupBox:AddToggle('ESPHealthBar',{
+	Text = 'show health';
+	Default = true;
+	Callback = function()
+		updateESPVisuals()
+	end,
+}):AddColorPicker('HealthBarColor', {
+	Default = Color3.new(0, 0.780392, 0.180392),
+	Callback = function(Value)
+		updateESPVisuals()
+	end
+})
+
+VisualsGroupBox:AddToggle('ESPArmorBar',{
+	Text = 'show armor';
+	Default = true;
+	Callback = function()
+		updateESPVisuals()
+	end,
+}):AddColorPicker('ArmorBarColor', {
+	Default = Color3.new(0.0784314, 0.745098, 0.780392),
+	Callback = function(Value)
+		updateESPVisuals()
+	end
+})
+
+VisualsGroupBox:AddToggle('ESPBottomText',{
+	Text = 'bottom text';
+	Default = true;
+	Callback = function()
+		updateESPVisuals()
+	end,
+}):AddColorPicker('BottomTextColor', {
+	Default = Color3.new(0.0784314, 0.745098, 0.780392),
+	Callback = function(Value)
+		updateESPVisuals()
+	end
+})
+
+VisualsGroupBox:AddLabel('name color'):AddColorPicker('NameTextColor', {
+	Default = Color3.new(0.0784314, 0.745098, 0.780392),
+	Callback = function(Value)
+		updateESPVisuals()
+	end
 })
 
 VisualsGroupBox:AddDropdown('ESPDisplayType',{
@@ -1064,18 +1225,12 @@ VisualsGroupBox:AddDropdown('ESPDisplayType',{
 	end,
 })
 
-VisualsGroupBox:AddToggle('ESPHealthBar',{
-	Text = 'show health';
-	Default = true;
-	Callback = function()
-		updateESPVisuals()
-	end,
-})
-
-VisualsGroupBox:AddToggle('ESPArmorBar',{
-	Text = 'show armor';
-	Default = true;
-	Callback = function()
+VisualsGroupBox:AddDropdown('ESPBottomText',{
+	Values = {'distance','gun'};
+	Default = 1;
+	Multi = false;
+	Text = 'bottom text';
+	Callback = function(Value)
 		updateESPVisuals()
 	end,
 })
@@ -1417,6 +1572,11 @@ AimlockGroupBox:AddToggle('AimlockDownedCheck',{
 	Default = true;
 })
 
+AimlockGroupBox:AddToggle('ShowRadius',{
+	Text = 'show radius';
+	Default = false;
+})
+
 AimlockGroupBox:AddDropdown('AimlockToggleType',{
 	Values = {'Toggle','Hold'};
 	Default = 2;
@@ -1432,6 +1592,15 @@ AimlockGroupBox:AddDropdown('AimlockAimPart',{
 	Default = 1;
 	Multi = false;
 	Text = 'aimpart';
+})
+
+AimlockGroupBox:AddSlider('CircleRadius',{
+	Text = 'radius';
+	Default = 200;
+	Min = 50;
+	Max = 800;
+	Rounding = 2;
+	Compact = false;
 })
 
 AimlockGroupBox:AddDivider()
@@ -1565,7 +1734,7 @@ BuyGroupBox:AddButton({
 				if item:FindFirstChild("Price") then
 					local ammoName = item.Name:match("%d*%s*%[(.-) Ammo%]")
 					if ammoName and ammoName == gunName then
-						purchaseItem(item,"Ammo")
+						purchaseItem(item,"Ammo",equippedGun.Name)
 						break
 					end
 				end
@@ -1633,7 +1802,7 @@ TargetStrafeGroupBox:AddToggle('ViewTargetStrafe',{
 RunService.Heartbeat:Connect(function()
 	local state = Options.TargetStrafeKey:GetState()
 	if state then
-		local target = GetClosestPlayerToMouse(false)
+		local target = GetClosestPlayerToMouse()
 		if target and not target.Character.BodyEffects['K.O'].Value then
 			cSyncOrbitAndShoot(target)
 		elseif not target then
@@ -1661,19 +1830,15 @@ Options.TargetStrafeKey:OnClick(function()
 end)
 
 local function orbitAround(target)
-	if target then
-		if target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-			if Character:FindFirstChild("BodyEffects") and Character.BodyEffects:FindFirstChild("K.O") and not Character.BodyEffects['K.O'].Value then
-				HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, -7, 0)
-			end
-			--[[local orbitRadius = 5
-			local orbitSpeed = 30
-			local angle = tick() * orbitSpeed
-			local x = math.cos(angle) * orbitRadius
-			local z = math.sin(angle) * orbitRadius
-			local orbitOffset = Vector3.new(x, 0, z)
-			HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(orbitOffset)--]]
-		end
+	if not target then return end
+	local targetHRP = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+	local bodyEffects = Character:FindFirstChild("BodyEffects")
+	local notKO = bodyEffects and bodyEffects:FindFirstChild("K.O") and not bodyEffects['K.O'].Value
+	if targetHRP and notKO then
+		local predictionTime = 0.2
+		local targetVelocity = targetHRP.Velocity
+		local predictedPosition = targetHRP.Position + (targetVelocity * predictionTime)
+		HumanoidRootPart.CFrame = CFrame.new(predictedPosition) * CFrame.new(0, -7, 0)
 	end
 end
 
@@ -1805,7 +1970,7 @@ task.spawn(function()
 							if not isPurchasing and target.Character.BodyEffects['K.O'].Value and not target.Character.BodyEffects['Dead'].Value then
 								stompPlayer(target)
 								actionText.Text = 'stomping...'..target.Name
-							elseif not isPurchasing and gun and gun:FindFirstChild("Ammo").Value == 0 and not target.Character.BodyEffects['K.O'].Value then
+							elseif not isPurchasing and gun and gun:FindFirstChild("Ammo").Value == 0 and InventoryFolder[gun.Name].Value ~= '0' and not target.Character.BodyEffects['K.O'].Value then
 								void()
 								actionText.Text = 'voiding...reloading gun'
 							elseif not isPurchasing and target.Character.BodyEffects['Dead'].Value then
@@ -2052,18 +2217,6 @@ Toggles.AutoEquipMask:OnChanged(function()
 	end
 end)
 
-task.spawn(function()
-	while task.wait() do
-		local state = Options.FlingKey:GetState()
-		if state then
-			local velocity, cframe = HumanoidRootPart.AssemblyLinearVelocity, HumanoidRootPart.CFrame
-			HumanoidRootPart.AssemblyLinearVelocity = Vector3.new(0,-1000000,0)
-			game:GetService("RunService").RenderStepped:Wait()
-			HumanoidRootPart.AssemblyLinearVelocity = velocity
-		end
-	end
-end)
-
 local autoarmorloop = nil
 local purchasing = false
 local HighMedArmor = workspace:FindFirstChild("[High-Medium Armor] - $2513", true)
@@ -2078,7 +2231,7 @@ Toggles.AutoArmor:OnChanged(function()
 						if Options.ArmorType.Value == 'high medium armor' and Character:FindFirstChild("BodyEffects").Armor.Value < 130 then
 							originalCharacterPos = HumanoidRootPart.CFrame
 							purchaseItem(HighMedArmor)
-						elseif Options.ArmorType.Value == 'medium armor(has cooldown)' and Character:FindFirstChild("BodyEffects").Armor.Value < 100 then
+						elseif Options.ArmorType.Value == 'medium armor' and Character:FindFirstChild("BodyEffects").Armor.Value < 100 then
 							originalCharacterPos = HumanoidRootPart.CFrame
 							purchaseItem(MediumArmor)
 						end
@@ -2156,6 +2309,22 @@ local autohealthloop = nil
 	end
 end)--]]
 
+local circle = Drawing.new("Circle")
+circle.Color = Color3.new(0, 0, 0)
+circle.Thickness = 2
+circle.Transparency = 1
+circle.Filled = false
+RunService.RenderStepped:Connect(function()
+	local mouseLocation = UserInputService:GetMouseLocation()
+	local correctedPos = Vector2.new(mouseLocation.X, mouseLocation.Y)
+	circle.Position = correctedPos
+	circle.Radius = Options.CircleRadius.Value
+	if Toggles.ShowRadius.Value then
+		circle.Visible = true
+	else
+		circle.Visible = false
+	end
+end)
 local lastCheckedTarget = nil
 local isLastTargetFriend = false
 local isLastTargetCrewValid = false
@@ -2165,7 +2334,7 @@ task.spawn(function()
 		local state = Options.AimlockKey:GetState()
 		if state then
 			if not AimlockAimTarget or not AimlockAimTarget.Character or not AimlockAimTarget.Character:FindFirstChild("Head") then
-				AimlockAimTarget = GetClosestPlayerToMouse(true)
+				AimlockAimTarget = GetClosestPlayerToRadius(Toggles.AimlockWallCheck.Value)
 				lastCheckedTarget = nil
 			end
 			if AimlockAimTarget and AimlockAimTarget.Character then
@@ -2179,7 +2348,7 @@ task.spawn(function()
 					and AimlockAimTarget.Character.BodyEffects:FindFirstChild("K.O") 
 					and AimlockAimTarget.Character.BodyEffects["K.O"].Value
 				if isDowned or not (isLastTargetCrewValid and isLastTargetFriend) then
-					AimlockAimTarget = GetClosestPlayerToMouse(true)
+					AimlockAimTarget = GetClosestPlayerToRadius(Toggles.AimlockWallCheck.Value)
 					lastCheckedTarget = nil
 				elseif AimlockAimTarget and AimlockAimTarget.Character then
 					local aimPart = AimlockAimTarget.Character:FindFirstChild(Options.AimlockAimPart.Value)
@@ -2218,13 +2387,13 @@ end)
 
 local tracer = Drawing.new("Line")
 tracer.Thickness = 2
-tracer.Color = Color3.fromRGB(204, 204, 204)
 tracer.Transparency = 1
 task.spawn(function()
 	while task.wait() do
 		local state = Toggles.ESPTracer.Value
 		if state then
-			local nearestToMouse = GetClosestPlayerToMouse(false)
+			tracer.Color = Options.TracerColor.Value
+			local nearestToMouse = GetClosestPlayerToMouse()
 			if nearestToMouse and nearestToMouse.Character then
 				local targetRootPart = nearestToMouse.Character:FindFirstChild("UpperTorso")
 				local TargetBodyEffects = nearestToMouse.Character:FindFirstChild("BodyEffects")
