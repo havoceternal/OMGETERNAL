@@ -27,9 +27,9 @@ local RunService = game:GetService("RunService")
 local StarterGui = game:GetService("StarterGui")
 local Players = game:GetService("Players")
 local Lighting = game:GetService("Lighting")
-local DefaultChatSystemChatEvents = ReplicatedStorage:WaitForChild("DefaultChatSystemChatEvents")
+--[[local DefaultChatSystemChatEvents = ReplicatedStorage:WaitForChild("DefaultChatSystemChatEvents")
 local SayMessageRequest = DefaultChatSystemChatEvents:WaitForChild("SayMessageRequest")
-local OnMessageDoneFiltering = DefaultChatSystemChatEvents:WaitForChild("OnMessageDoneFiltering")
+local OnMessageDoneFiltering = DefaultChatSystemChatEvents:WaitForChild("OnMessageDoneFiltering")--]]
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.ScreenInsets = Enum.ScreenInsets.None
@@ -232,6 +232,7 @@ local ThemeManager = loadstring(game:HttpGet('https://raw.githubusercontent.com/
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 --Library:Notify(--text,--time)
 local KillAuraWhitelistTable = {}
+local KillAuraBlacklistTable = {}
 
 local Window = Library:CreateWindow({
 	Title = 'eternal asc';
@@ -309,6 +310,11 @@ local function processQueue(Type,gunName)
 	if Player.Character:FindFirstChildOfClass("Tool") then
 		equippedTool = Player.Character:FindFirstChildOfClass("Tool")
 	end
+	local initialValue
+	if Type == "Ammo" and gunName and InventoryFolder:FindFirstChild(gunName) then
+		initialValue = InventoryFolder[gunName].Value
+	end
+
 	while #itemsToPurchase > 0 do
 		task.wait()
 		HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero
@@ -319,7 +325,6 @@ local function processQueue(Type,gunName)
 			if not string.find(toolName,'Armor') then
 				while not HasTool(toolName) do
 					Humanoid:UnequipTools()
-					fireclickdetector(item.ClickDetector)
 					HumanoidRootPart.CFrame = item.Head.CFrame * CFrame.new(0,3,0)
 					task.wait(0.09)
 					fireclickdetector(item.ClickDetector)
@@ -330,7 +335,6 @@ local function processQueue(Type,gunName)
 						while Character:FindFirstChild("BodyEffects") and Character.BodyEffects:FindFirstChild("Armor") and Character.BodyEffects.Armor.Value < 130 and Toggles.AutoArmor.Value do
 							actionText.Text = 'purchasing...high medium armor'
 							Humanoid:UnequipTools()
-							fireclickdetector(item.ClickDetector)
 							HumanoidRootPart.CFrame = item.Head.CFrame * CFrame.new(0,3,0)
 							task.wait(0.09)
 							fireclickdetector(item.ClickDetector)
@@ -341,7 +345,6 @@ local function processQueue(Type,gunName)
 						while Character:FindFirstChild("BodyEffects") and Character.BodyEffects:FindFirstChild("Armor") and Character.BodyEffects.Armor.Value < 100 and Toggles.AutoArmor.Value do
 							actionText.Text = 'purchasing...medium armor'
 							Humanoid:UnequipTools()
-							fireclickdetector(item.ClickDetector)
 							HumanoidRootPart.CFrame = item.Head.CFrame * CFrame.new(0,3,0)
 							task.wait(0.09)
 							fireclickdetector(item.ClickDetector)
@@ -351,13 +354,14 @@ local function processQueue(Type,gunName)
 			end
 		elseif item and item.Parent and Type and gunName then
 			if Type == "Ammo" then
-				local initialValue = InventoryFolder[gunName].Value
-				while InventoryFolder[gunName].Value <= initialValue do
+				local attempts = 0
+				local maxAttempts = 25
+				while InventoryFolder[gunName].Value <= initialValue and attempts < maxAttempts do
 					Humanoid:UnequipTools()
-					fireclickdetector(item.ClickDetector)
 					HumanoidRootPart.CFrame = item.Head.CFrame * CFrame.new(0,3,0)
 					task.wait(0.09)
 					fireclickdetector(item.ClickDetector)
+					attempts += 1
 				end
 			end
 		end
@@ -530,7 +534,7 @@ local function checkCrew(targetPlayer)
 	end
 end
 
-local function checkFriend(targetPlayer,friendCheck)
+local function checkFriend(targetPlayer, friendCheck)
 	if friendCheck then
 		return Player:IsFriendsWith(targetPlayer.UserId)
 	else
@@ -546,6 +550,27 @@ local function isPlayerWhitelisted(targetPlayer)
 		end
 	end
 	return false
+end
+
+local function isPlayerBlacklisted(targetPlayer)
+	if not KillAuraBlacklistTable then return false end
+	for _, name in ipairs(KillAuraBlacklistTable) do
+		if targetPlayer.Name == name or targetPlayer.DisplayName == name then
+			return true
+		end
+	end
+	return false
+end
+
+local function shouldKill(target)
+	local hasBlacklist = KillAuraBlacklistTable and #KillAuraBlacklistTable > 0
+	local hasWhitelist = KillAuraWhitelistTable and #KillAuraWhitelistTable > 0
+	if hasBlacklist then
+		return isPlayerBlacklisted(target)
+	elseif hasWhitelist then
+		return not isPlayerWhitelisted(target)
+	end
+	return true
 end
 
 local function GetClosestPlayerToCharacter()
@@ -564,7 +589,7 @@ local function GetClosestPlayerToCharacter()
 						and isKO and not isKO.Value
 						and not checkCrew(target) 
 						and not checkFriend(target, Toggles.KillAuraFriendCheck.Value)
-						and not isPlayerWhitelisted(target) then
+						and shouldKill(target) then
 
 						shortestDistance = distance
 						closestPlayer = target
@@ -581,7 +606,6 @@ local function GetClosestPlayerToCharacter()
 		return nil
 	end
 end
-
 
 local function GetClosestPlayerToMouse()
 	local closestPlayer = nil
@@ -766,7 +790,7 @@ local function createESP(target)
 					UpdateArmor()
 				end
 				local function updateBottomText()
-					local BottomText = ESPGUICLONE:WaitForChild("BOTTOMTEXT")
+					local BottomText = ESPGUICLONE:FindFirstChild("BOTTOMTEXT")
 					if not BottomText then return end
 					if Options.ESPBottomText.Value == "distance" then
 						if character and character:FindFirstChild("HumanoidRootPart") and hrp then
@@ -917,7 +941,6 @@ local hiddenFling = false
 local function fling()
 	local vel, movel = nil, 0.1
 	while hiddenFling do
-		print('yes')
 		RunService.Heartbeat:Wait()
 		if HumanoidRootPart then
 			vel = HumanoidRootPart.Velocity
@@ -1109,8 +1132,21 @@ RageBotGroupBox:AddToggle('KillAuraFriendCheck',{
 RageBotGroupBox:AddDropdown('KillAuraWhitelist', {
 	SpecialType = 'Player',
 	Text = 'whitelist',
-	Tooltip = 'who killaura doesnt shoot',
 	Multi = true;
+	Callback = function()
+		Options.KillAuraBlacklist:SetValue(nil)
+		KillAuraBlacklistTable = {}
+	end,
+})
+
+RageBotGroupBox:AddDropdown('KillAuraBlacklist', {
+	SpecialType = 'Player',
+	Text = 'blacklist',
+	Multi = true;
+	Callback = function()
+		Options.KillAuraWhitelist:SetValue(nil)
+		KillAuraWhitelistTable = {}
+	end,
 })
 
 Options.KillAuraWhitelist:OnChanged(function()
@@ -1120,10 +1156,16 @@ Options.KillAuraWhitelist:OnChanged(function()
 	end
 end)
 
+Options.KillAuraBlacklist:OnChanged(function()
+	KillAuraBlacklistTable = {}
+	for plr, value in next, Options.KillAuraBlacklist.Value do
+		table.insert(KillAuraBlacklistTable,plr)
+	end
+end)
+
 VisualsGroupBox:AddToggle('ESP',{
 	Text = 'esp';
 	Default = false;
-
 	Callback = function(Value)
 		if Toggles.ESP.Value then
 			for _, plr in ipairs(Players:GetPlayers()) do
@@ -1385,7 +1427,7 @@ GunEffectsTab2:AddDropdown('BulletSoundEffects',{
 	Text = 'bullet sound';
 })
 
-function ChatSpy.checkIgnored(message)
+--[[function ChatSpy.checkIgnored(message)
 	for i = 1, #ChatSpy.IgnoreList do
 		local v = ChatSpy.IgnoreList[i];
 		if (v.ExactMatch and message == v.Message) or (not v.ExactMatch and string.match(v.Message, message)) then 
@@ -1445,7 +1487,7 @@ ChatSpyGroupBox:AddButton({
 		chatFrame.ChatChannelParentFrame.Visible = true
 		chatFrame.ChatBarParentFrame.Position = chatFrame.ChatChannelParentFrame.Position + UDim2.new(UDim.new(), chatFrame.ChatChannelParentFrame.Size.Y)
 	end,
-})
+})--]]
 
 local function monitorCharacterBullet(newCharacter)
 	newCharacter.ChildAdded:Connect(function(child)
@@ -1837,13 +1879,11 @@ local function orbitAround(target)
 	local notKO = bodyEffects and bodyEffects:FindFirstChild("K.O") and not bodyEffects['K.O'].Value
 	if targetHRP and notKO then
 		if Toggles.VoidKill.Value then
-			print('teleporting')
 			local predictionTime = 0.2
 			local targetVelocity = targetHRP.Velocity
 			local predictedPosition = targetHRP.Position + (targetVelocity * predictionTime)
 			HumanoidRootPart.CFrame = CFrame.new(predictedPosition) * CFrame.new(0, -6, 0)
 		else
-			print('teleporting')
 			HumanoidRootPart.CFrame = CFrame.new(targetHRP.Position) * CFrame.new(0, -6, 0)
 		end
 	end
@@ -1925,10 +1965,10 @@ local rifleAmmo = workspace:FindFirstChild("5 [Rifle Ammo] - $273", true)
 local function handleGun(target)
 	if Character:FindFirstChild("BodyEffects") and Character.BodyEffects:FindFirstChild("K.O") and not Character.BodyEffects['K.O'].Value then
 		local gun = GetGun(Options.TargetGunMode.Value)
-		if not isPurchasing and gun and gun.Parent ~= Character and InventoryFolder[gun.Name].Value ~= '0' then
+		if not isPurchasing and gun and gun.Parent ~= Character then
 			Humanoid:EquipTool(gun)
 		end
-		if not isPurchasing and gun and not target.Character.BodyEffects['K.O'].Value then
+		if not isPurchasing and gun and not target.Character.BodyEffects['K.O'].Value and InventoryFolder[gun.Name].Value ~= '0' then
 			actionText.Text = 'shooting...'..target.Name
 			orbitAround(target)
 			ShootGun(target)
@@ -1939,7 +1979,7 @@ end
 local function handlePurchases()
 	if Character:FindFirstChild("BodyEffects") and Character.BodyEffects:FindFirstChild("K.O") and not Character.BodyEffects['K.O'].Value then
 		local gun = GetGun(Options.TargetGunMode.Value)
-		if not isPurchasing and gun and gun.Parent ~= Character and InventoryFolder[gun.Name].Value ~= '0' then
+		if not isPurchasing and gun and gun.Parent ~= Character then
 			Humanoid:EquipTool(gun)
 		end
 		if not gun then
@@ -1979,15 +2019,17 @@ task.spawn(function()
 							end
 							handleGun(target)
 							handlePurchases()
-							if not isPurchasing and target.Character.BodyEffects['K.O'].Value and not target.Character.BodyEffects['Dead'].Value then
-								stompPlayer(target)
-								actionText.Text = 'stomping...'..target.Name
-							elseif not isPurchasing and gun and gun:FindFirstChild("Ammo").Value == 0 and InventoryFolder[gun.Name].Value ~= '0' and not target.Character.BodyEffects['K.O'].Value then
-								void()
-								actionText.Text = 'voiding...reloading gun'
-							elseif not isPurchasing and target.Character.BodyEffects['Dead'].Value then
-								void()
-								actionText.Text = 'voiding...target dead'
+							if gun then
+								if not isPurchasing and target.Character.BodyEffects["K.O"].Value and not target.Character.BodyEffects["Dead"].Value and InventoryFolder[gun.Name].Value ~= '0' then
+									stompPlayer(target)
+									actionText.Text = 'stomping...'..target.Name
+								elseif not isPurchasing and gun and gun:FindFirstChild("Ammo").Value == 0 and InventoryFolder[gun.Name].Value ~= '0' and not target.Character.BodyEffects['K.O'].Value then
+									void()
+									actionText.Text = 'voiding...reloading gun'
+								elseif not isPurchasing and target.Character.BodyEffects["Dead"].Value and InventoryFolder[gun.Name].Value ~= '0' then
+									void()
+									actionText.Text = 'voiding...target dead'
+								end
 							end
 						end
 					elseif #targets > 1 then
@@ -2011,7 +2053,7 @@ task.spawn(function()
 									elseif not isPurchasing and gun:FindFirstChild("Ammo").Value == 0 and InventoryFolder[gun.Name].Value ~= '0' and not target.Character.BodyEffects['K.O'].Value then
 										void()
 										actionText.Text = 'voiding...reloading gun'
-									elseif not isPurchasing and target.Character.BodyEffects["Dead"].Value then
+									elseif not isPurchasing and target.Character.BodyEffects["Dead"].Value and InventoryFolder[gun.Name].Value ~= '0' then
 										actionText.Text = 'next target...'..target.Name..' is dead'
 										currentIndex += 1
 										processTarget()
